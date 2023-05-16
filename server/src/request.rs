@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::net::TcpStream;
+use std::sync::Mutex;
 
 use crate::job::Matrix;
 
@@ -33,22 +34,15 @@ impl Request {
                     usize::try_from(capacity).unwrap()
                 };
 
-                let mut matrix = Matrix {
-                    type_size,
-                    dimension,
-                    bytes: vec![0u8; expected_len],
-                };
-
-                let mut vec = matrix.bytes;
-                let vec_slice = vec.as_mut_slice();
+                let mut matrix_buffer = vec![0u8; expected_len];
 
                 let matrix_part = &buffer[6..];
-                let vec_part = &mut vec_slice[0..matrix_part.len()];
+                let vec_part = &mut matrix_buffer[0..matrix_part.len()];
                 vec_part.copy_from_slice(matrix_part);
                 let mut written_count = matrix_part.len();
 
                 while written_count < expected_len {
-                    let read_count = match stream.read(&mut vec_slice[written_count..]) {
+                    let read_count = match stream.read(&mut matrix_buffer[written_count..]) {
                         Ok(size) => size,
                         Err(error) => Err(format!("{}", error))?,
                     };
@@ -56,9 +50,13 @@ impl Request {
                     written_count += read_count;
                 }
 
-                matrix.bytes = vec;
-
-                Ok(Request::SendData { matrix })
+                Ok(Request::SendData {
+                    matrix: Matrix {
+                        type_size,
+                        dimension,
+                        bytes: Mutex::new(Some(matrix_buffer)),
+                    },
+                })
             }
             1 => Ok(Request::StartCalculation {
                 index: buffer[1],

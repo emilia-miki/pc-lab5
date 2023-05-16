@@ -1,14 +1,13 @@
 use std::{
     collections::HashMap,
-    slice,
-    sync::atomic::{AtomicPtr, Ordering},
     sync::{atomic::AtomicU8, Arc},
+    sync::{atomic::Ordering, Mutex},
 };
 
 pub struct Matrix {
     pub type_size: u8,
     pub dimension: u32,
-    pub bytes: Vec<u8>,
+    pub bytes: Mutex<Option<Vec<u8>>>,
 }
 
 #[derive(Copy, Clone)]
@@ -68,7 +67,6 @@ struct Job {
     status: AtomicStatus,
     thread_count: AtomicU8,
     matrix: Matrix,
-    bytes_ptr: AtomicPtr<u8>,
 }
 
 pub struct JobManager {
@@ -79,13 +77,11 @@ pub struct JobManager {
 const DEFAULT_THREAD_COUNT: u8 = 4;
 
 impl JobManager {
-    pub fn add_job(&mut self, mut matrix: Matrix) -> u8 {
-        let ptr = matrix.bytes.as_mut_ptr();
+    pub fn add_job(&mut self, matrix: Matrix) -> u8 {
         let job = Arc::new(Job {
             status: AtomicStatus::new(Status::Ready),
             thread_count: AtomicU8::new(DEFAULT_THREAD_COUNT),
             matrix,
-            bytes_ptr: AtomicPtr::new(ptr),
         });
 
         let index = self.job_iterator;
@@ -95,7 +91,7 @@ impl JobManager {
         index
     }
 
-    pub fn start_job(&self, index: u8, thread_count: u8) -> Result<(), String> {
+    pub fn start_job(&mut self, index: u8, thread_count: u8) -> Result<(), String> {
         let job = self
             .jobs
             .get(&index)
@@ -107,16 +103,20 @@ impl JobManager {
 
         job.status.store(Status::Running);
 
-        let job = Arc::clone(job);
+        let job_arc = Arc::clone(job);
         std::thread::spawn(move || {
+            let mut matrix_vec = {
+                let mut matrix_buffer = job_arc.matrix.bytes.lock().unwrap();
+                matrix_buffer.take().unwrap()
+            };
+            let matrix_slice = matrix_vec.as_mut_slice();
+
+            let job_arc = &job_arc;
             std::thread::scope(move |s| {
-                let len = job.matrix.bytes.len();
-                let vec = job.bytes_ptr.load(Ordering::Relaxed);
-                let vec: &mut [u8] = unsafe { slice::from_raw_parts_mut(vec, len) };
                 let mut splits = split_vec(
-                    vec,
-                    job.matrix.type_size,
-                    job.matrix.dimension,
+                    matrix_slice,
+                    job_arc.matrix.type_size,
+                    job_arc.matrix.dimension,
                     thread_count,
                 );
 
@@ -139,8 +139,11 @@ impl JobManager {
                     }
                 }
 
-                job.status.store(Status::Completed);
+                job_arc.status.store(Status::Completed);
             });
+
+            let mut matrix_buffer_opt = job_arc.matrix.bytes.lock().unwrap();
+            let _ = matrix_buffer_opt.insert(matrix_vec);
         });
 
         Ok(())
@@ -159,7 +162,13 @@ impl JobManager {
             Ok(job) => job,
             Err(_) => panic!("Arc value is more than one, but the job is marked as completed"),
         };
-        Some(job.matrix.bytes)
+
+        let mut matrix_buffer = job.matrix.bytes.lock().unwrap();
+        if matrix_buffer.is_none() {
+            return None;
+        };
+
+        matrix_buffer.take()
     }
 }
 
