@@ -1,7 +1,12 @@
+use core::slice;
 use std::{
     collections::HashMap,
     sync::{atomic::AtomicU8, Arc},
-    sync::{atomic::Ordering, Mutex},
+    sync::{
+        atomic::{AtomicPtr, Ordering},
+        Mutex,
+    },
+    time,
 };
 
 pub struct Matrix {
@@ -91,7 +96,7 @@ impl JobManager {
         index
     }
 
-    pub fn start_job(&mut self, index: u8, thread_count: u8) -> Result<(), String> {
+    pub fn start_job(&mut self, index: u8, mut thread_count: u8) -> Result<(), String> {
         let job = self
             .jobs
             .get(&index)
@@ -99,35 +104,66 @@ impl JobManager {
 
         if thread_count > 0 {
             job.thread_count.store(thread_count, Ordering::Relaxed);
+        } else {
+            thread_count = job.thread_count.load(Ordering::Relaxed);
         }
+
+        let job_start_time = time::Instant::now();
 
         job.status.store(Status::Running);
 
         let job_arc = Arc::clone(job);
+        let spawning_thread_name = String::from(std::thread::current().name().unwrap());
         std::thread::spawn(move || {
+            let spawning_thread_name = &spawning_thread_name;
+
             let mut matrix_vec = {
                 let mut matrix_buffer = job_arc.matrix.bytes.lock().unwrap();
                 matrix_buffer.take().unwrap()
             };
-            let matrix_slice = matrix_vec.as_mut_slice();
+            let matrix_ptr = Arc::new(AtomicPtr::new(matrix_vec.as_mut_ptr()));
 
             let job_arc = &job_arc;
             std::thread::scope(move |s| {
-                let mut splits = split_vec(
-                    matrix_slice,
-                    job_arc.matrix.type_size,
-                    job_arc.matrix.dimension,
-                    thread_count,
-                );
+                let type_size = job_arc.matrix.type_size as usize;
+                let thread_count = thread_count as usize;
+                let mut threads: Vec<std::thread::ScopedJoinHandle<()>> =
+                    Vec::with_capacity(thread_count);
 
-                let mut threads: Vec<std::thread::ScopedJoinHandle<()>> = Vec::with_capacity(4);
-
-                for _ in 0..4 {
-                    let split = splits.pop().unwrap();
+                for i in 0..thread_count {
+                    let matrix_ptr = Arc::clone(&matrix_ptr);
                     threads.push(s.spawn(move || {
-                        let (mut vec1, mut vec2) = split;
-                        for i in 0..vec1.len() {
-                            vec1[i].swap_with_slice(vec2[i]);
+                        let matrix_ptr = matrix_ptr.load(Ordering::Relaxed);
+
+                        let index = i;
+                        let dimension = job_arc.matrix.dimension as usize;
+
+                        let mut taken = 0;
+                        for i in 0..dimension {
+                            for j in 0..i {
+                                taken += 1;
+                                if taken % thread_count != index {
+                                    continue;
+                                }
+
+                                let lower_index = (i * dimension + j) * type_size;
+                                let upper_index = (j * dimension + i) * type_size;
+
+                                let lower = unsafe {
+                                    slice::from_raw_parts_mut(
+                                        matrix_ptr.add(lower_index),
+                                        type_size,
+                                    )
+                                };
+                                let upper = unsafe {
+                                    slice::from_raw_parts_mut(
+                                        matrix_ptr.add(upper_index),
+                                        type_size,
+                                    )
+                                };
+
+                                lower.swap_with_slice(upper);
+                            }
                         }
                     }));
                 }
@@ -138,12 +174,21 @@ impl JobManager {
                         Err(_) => eprintln!("A thread returned an error"),
                     }
                 }
-
-                job_arc.status.store(Status::Completed);
             });
 
-            let mut matrix_buffer_opt = job_arc.matrix.bytes.lock().unwrap();
-            let _ = matrix_buffer_opt.insert(matrix_vec);
+            {
+                let mut matrix_buffer_opt = job_arc.matrix.bytes.lock().unwrap();
+                let _ = matrix_buffer_opt.insert(matrix_vec);
+            }
+
+            job_arc.status.store(Status::Completed);
+
+            let job_end_time = time::Instant::now();
+            println!(
+                "{}: It took {} ms to complete the calculation",
+                spawning_thread_name,
+                (job_end_time - job_start_time).as_millis()
+            );
         });
 
         Ok(())
@@ -160,7 +205,11 @@ impl JobManager {
         let job = self.jobs.remove(&index)?;
         let job = match Arc::try_unwrap(job) {
             Ok(job) => job,
-            Err(_) => panic!("Arc value is more than one, but the job is marked as completed"),
+            Err(_) => {
+                eprintln!("Arc value is more than one, but the job is marked as completed");
+
+                return None;
+            }
         };
 
         let mut matrix_buffer = job.matrix.bytes.lock().unwrap();
@@ -177,79 +226,4 @@ pub fn new_manager() -> JobManager {
         job_iterator: 0,
         jobs: HashMap::<u8, Arc<Job>>::new(),
     }
-}
-
-fn split_vec(
-    vec: &mut [u8],
-    type_size: u8,
-    dimension: u32,
-    thread_count: u8,
-) -> Vec<(Vec<&mut [u8]>, Vec<&mut [u8]>)> {
-    let thread_count: u32 = thread_count.into();
-    let type_size: usize = type_size.into();
-    let dimension: u32 = dimension;
-
-    let full_len = dimension * (dimension + 1) / 2;
-    let part_len = full_len / thread_count;
-
-    let mut result = Vec::<(Vec<&mut [u8]>, Vec<&mut [u8]>)>::with_capacity(4);
-
-    let capacity = {
-        let capacity = full_len - part_len * (thread_count - 1);
-        capacity.try_into().unwrap()
-    };
-
-    for _ in 0..thread_count {
-        result.push((
-            Vec::<&mut [u8]>::with_capacity(capacity),
-            Vec::<&mut [u8]>::with_capacity(capacity),
-        ));
-    }
-
-    let mut i = 0;
-    let mut j = 0;
-    let mut taken = (0, 0);
-    let mut thread_index = (0, 0);
-    for slice in vec.chunks_exact_mut(type_size) {
-        if i == j {
-            j += 1;
-            if j % dimension == 0 {
-                j = 0;
-                i += 1;
-            }
-
-            continue;
-        }
-
-        let (result, taken, thread_index) = if i < j {
-            (
-                &mut result[thread_index.0].0,
-                &mut taken.0,
-                &mut thread_index.0,
-            )
-        } else {
-            (
-                &mut result[thread_index.1].1,
-                &mut taken.1,
-                &mut thread_index.1,
-            )
-        };
-
-        result.push(slice);
-        *taken += 1;
-        *thread_index += 1;
-
-        if u32::try_from(*thread_index).unwrap() < thread_count - 1 && *taken % part_len == 0 {
-            *taken = 0;
-            *thread_index += 1;
-        }
-
-        j += 1;
-        if j % dimension == 0 {
-            j = 0;
-            i += 1;
-        }
-    }
-
-    result
 }

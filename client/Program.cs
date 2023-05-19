@@ -24,7 +24,7 @@ Console.WriteLine(
     "The client works by accepting commands and sending them to the server. " +
     "You can also type help to get the list of commands.");
 
-var state = State.Instance;
+var state = State.GetInstance();
 state.Socket = client;
 
 while (true)
@@ -85,5 +85,10 @@ while (true)
     catch (Exception e)
     {
         Console.WriteLine(e.Message);
+
+        if (e.Message == "The server disconnected")
+        {
+            return;
+        }
     }
 }

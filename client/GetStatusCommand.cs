@@ -1,19 +1,25 @@
-using System.Globalization;
-
-public class GetStatusCommand : IndexCommand
+public class GetStatusCommand : Command
 {
-	private static GetStatusCommand instance = new GetStatusCommand();
-	public static GetStatusCommand Instance { get => instance; }
+	static GetStatusCommand? instance;
+	public static GetStatusCommand GetInstance() { 
+		if (instance == null)
+		{
+			instance = new GetStatusCommand();
+		}
+
+		return instance;
+	}
 
 	static GetStatusCommand() {}
 	private GetStatusCommand()
 	{
-		encoding = Constants.CommandEncodings[GetType()];
+		encoding = Constants.Instance.GetCommandEncodings()[GetType()];
 	}
 
 	private enum Status
 	{
 		NoData,
+		Ready,
 		Running,
 		Completed,
 	}
@@ -31,6 +37,31 @@ public class GetStatusCommand : IndexCommand
 		return (Status) value;
 	}
 
+    protected override void ParseTokens()
+    {
+		if (tokens.Length > 1)
+		{
+			throw new Exception("There can be no arguments provided to this command");
+		}
+    }
+
+	private byte index;
+
+	private void SetIndex()
+	{
+		bytes[1] = index;
+	}
+
+    protected override void PrepareRequestMessage()
+    {
+		bufferSize = 2;
+
+		index = state.GetStatusGet();
+
+		SetCommand();
+		SetIndex();
+    }
+
     protected override void HandleResponseMessage()
     {
         base.HandleResponseMessage();
@@ -41,9 +72,19 @@ public class GetStatusCommand : IndexCommand
 			case Status.NoData:
 				Console.WriteLine(
 					"You haven't provided a matrix for this index!");
+
+				state.GetStatusSet(index);
+				return;
+			case Status.Ready:
+				Console.WriteLine(
+					"The job is ready to start");
+
+				state.GetStatusSet(index);
 				return;
 			case Status.Running:
 				Console.WriteLine("The calculation is running.");
+
+				state.GetStatusSet(index);
 				return;
 			case Status.Completed:
 				Console.WriteLine(
@@ -51,42 +92,52 @@ public class GetStatusCommand : IndexCommand
 				break;
 		}	
 
-		var matrix = state.GetMatrix(index);
-		var bufferSize = matrix.Bytes.Length;
-		var buffer = new byte[bufferSize];
+		var spec = state.GetMatrixSpecs(index);
+		var buffer = new byte[spec.BufferLength];
 		var bufferIndex = 0;
 
-		new Span<byte>(bytes, 2, receivedCount - 2)
-		.CopyTo(new Span<byte>(buffer, bufferIndex, receivedCount));
+		receivedCount -= 2;
+		new Span<byte>(bytes, 2, receivedCount)
+			.CopyTo(new Span<byte>(buffer, bufferIndex, receivedCount));
 		bufferIndex += receivedCount;
 
 		while (bufferIndex < buffer.Length)
 		{
 			ReceiveResponseMessage();
 
-			
 			new Span<byte>(bytes, 0, receivedCount)
-			.CopyTo(new Span<byte>(buffer, bufferIndex, receivedCount));
+				.CopyTo(new Span<byte>(buffer, bufferIndex, receivedCount));
 			bufferIndex += receivedCount;
 		}
 
-		var transposedMatrix = Matrix.FromBytes(buffer, matrix.Type, matrix.Dimension);
+		var transposedMatrix = Matrix.FromBytes(spec.TypeSize, spec.Type, spec.Dimension, buffer);
 
-        var filename = DateTime.UtcNow.ToString(
-            CultureInfo
-            .InvariantCulture
-            .DateTimeFormat
-            .SortableDateTimePattern) + "-matrix.csv";
+		const string downloadsDir = "downloaded_matrices";
+		if (!Directory.Exists(downloadsDir))
+		{
+			Directory.CreateDirectory(downloadsDir);
+		}
+
+		var rand = new Random();
+        var filename = downloadsDir + "/" +
+			(((DateTimeOffset) DateTime.UtcNow).ToUnixTimeMilliseconds()) + rand.Next() + ".csv";
 
 		transposedMatrix.ToFile(filename);
 
-		Console.Write(
-			$"The transposed matrix has been downloaded to file {filename}. " +
-			"Do you want to view it in terminal? (y/N) ");
-		var input = Console.ReadLine()!;
-		if (input.Trim().ToLower() == "y")
+		Console.Write($"The transposed matrix has been downloaded to file {filename}.");
+		if (Console.IsInputRedirected)
 		{
-			transposedMatrix.ToCli();
+			Console.WriteLine();
+		}
+		else
+		{
+			Console.Write(
+				" Do you want to view it in terminal? (y/N) ");
+			var input = Console.ReadLine()!;
+			if (input.Trim().ToLower() == "y")
+			{
+				transposedMatrix.ToCli();
+			}
 		}
     }
 }

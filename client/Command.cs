@@ -5,20 +5,15 @@ public abstract class Command
 {
 	protected byte encoding;
 	protected string[] tokens = null!;
-	protected byte[] bytes = null!;
-	protected State state = State.Instance;
-	protected Socket socket = State.Instance.Socket;
+	protected static byte[] bytes = new byte[1500];
+	protected State state = State.GetInstance();
+	protected Socket socket = State.GetInstance().Socket;
 	protected int receivedCount;
-
-	private static IReadOnlyDictionary<string, Command> commands =
-		Constants
-		.CommandsByString
-		.ToDictionary(item => item.Key, 
-					  item => (Command) item.Value.GetProperty("Instance")!.GetValue(null)!);
+	protected int bufferSize;
 
 	public static void Run(string[] tokens)
 	{
-		var command = commands[tokens[0]];
+		var command = Constants.Instance.GetCommandsByString()[tokens[0]];
 		command.tokens = tokens;
 		command.Run();
 	}
@@ -58,20 +53,21 @@ public abstract class Command
 
     protected virtual void SendRequestMessage()
     {
-		var sentCount = state.Socket.Send(bytes);
-		if (sentCount != bytes.Length)
+		var sentCount = state.Socket.Send(bytes, 0, bufferSize, SocketFlags.None);
+		if (sentCount != bufferSize)
 		{
 			throw new Exception(
-				$"Sent only {sentCount} bytes out of {bytes.Length}");
+				$"Sent only {sentCount} bytes out of {bufferSize}");
 		}
     }
 
     protected virtual void ReceiveResponseMessage()
     {
-		receivedCount = state.Socket.Receive(bytes);
+		bufferSize = 1500;
+		receivedCount = state.Socket.Receive(bytes, 0, bufferSize, SocketFlags.None);
 		if (receivedCount == 0)
 		{
-			throw new Exception("Received and empty packet");
+			throw new Exception("The server disconnected");
 		}
     }
 

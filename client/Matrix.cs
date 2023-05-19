@@ -1,168 +1,82 @@
-using System.Reflection;
 using System.Text;
+using System.Globalization;
 
 public class Matrix
 {
 	public UInt32 Dimension { get; }
 	public Type Type { get; }
 	public byte TypeSize { get; }
+	public ReadOnlySpan<byte> Bytes { get => bytes; }
+	byte[] bytes;
 
-	public byte[] Bytes { get => bytes; }
-
-	bool isArrayInitialized = false;
-	Array array = null!;
-	byte[] bytes = null!;
-
-	private MethodInfo toObjectMethod;
-	private MethodInfo getBytesMethod;
-
-	public Array GetArray()
+	Matrix(byte typeSize, Type type, UInt32 dimension, byte[] bytes)
 	{
-		if (!isArrayInitialized)
-		{
-			ParseBytes();
-			isArrayInitialized = true;
-		}
-
-		return array;
-	}
-
-	public class InvalidTypeException : Exception {}
-
-	private static byte GetTypeSize(Type type) =>
-		BitConverter.GetBytes((dynamic) Activator.CreateInstance(type)!).Length;
-
-	private Matrix(UInt32 dimension, Type type)
-	{
-		Dimension = dimension;
+		TypeSize = typeSize;
 		Type = type;
-		TypeSize = Matrix.GetTypeSize(type);
-
-		toObjectMethod = typeof(BitConverter).GetMethod($"To{type}",
-			new[] { typeof(byte[]), typeof(int) })!;
-		getBytesMethod = typeof(BitConverter).GetMethod("GetBytes", new[] { type })!;
-
-		Debug.WriteLine(
-			$"Created an instance of MatrixObject. N = {dimension}, type = {type}, " +
-			$"element size = {TypeSize} bytes.");
+		Dimension = dimension;
+		this.bytes = bytes;
 	}
 
-	private object BytesToObject(int itemIndex)
+	public static Matrix FromBytes(byte typeSize, Type type, UInt32 dimension, byte[] bytes)
 	{
-		var startIndex = itemIndex * TypeSize;
-
-		// TODO: why can't i do this without copying
-		return toObjectMethod.Invoke(null, new object[] { bytes, startIndex })!;
-	}
-
-	private byte[] StrToBytes(string str)
-	{
-		var value = Convert.ChangeType(str, Type);
-
-		// TODO: why can't i do this without copying
-		return (byte[]) getBytesMethod.Invoke(null, new[] { value })!;
-	}
-
-	private void ParseLines(string[] lines)
-	{
-		bytes = new byte[TypeSize * lines.Length * lines.Length];
-
-		for (var i = 0; i < lines.Count(); i++)
-		{
-			StrToBytes(lines[i]).CopyTo(bytes, i * TypeSize);
-		}
-	}
-
-	private void ParseBytes()
-	{
-		if (bytes.Length != TypeSize * Dimension * Dimension)
-		{
-			throw new InvalidTypeException();
-		}
-
-		var arrayLength = Dimension * Dimension;
-		array = Array.CreateInstance(Type, arrayLength);
-		for (var i = 0; i < arrayLength; i++)
-		{
-			array.SetValue(BytesToObject(i), i);
-		}
-	}
-
-	public static Matrix FromLines(string[] lines)
-	{
-		var sqrt = Math.Sqrt(lines.Length);
-		var dimension = (UInt32) sqrt;
-		if (sqrt != dimension)
-		{
-			throw new InvalidTypeException();
-		}
-
-		foreach (var type in Constants.Types)
-		{
-			var matrix = new Matrix(dimension, type);
-
-			try
-			{
-				matrix.ParseLines(lines);
-			}
-			catch
-			{
-				continue;
-			}
-
-			return matrix;
-		}
-
-		throw new InvalidTypeException();
-	}
-
-	public static Matrix FromBytes(byte[] bytes, Type type, UInt32 dimension)
-	{
-		var matrix = new Matrix(dimension, type);
-
-		matrix.bytes = bytes;
-		matrix.ParseBytes();
-
-		return matrix;
+		return new Matrix(typeSize, type, dimension, bytes);
 	}
 
 	public static Matrix FromFile(string filename)
 	{
-        var lines =
-			File
-			.ReadLines(filename)
-			.Where(line => !string.IsNullOrWhiteSpace(line))
-			.SelectMany(line => line.Split(','))
-			.ToArray();
+		Console.WriteLine("Loading the matrix...");
 
-		return Matrix.FromLines(lines);
+		string[] matrixStringArray;
+		try
+		{
+	        matrixStringArray =
+				File
+				.ReadLines(filename)
+				.Where(line => !string.IsNullOrWhiteSpace(line))
+				.SelectMany(line => line.Split(','))
+				.Select(line => line.Trim())
+				.ToArray();
+			
+		}
+		catch (FileNotFoundException)
+		{
+			throw new Exception("File not found");
+		}
+
+		var matrix = Matrix.FromStringArray(matrixStringArray);
+
+		Console.WriteLine("The matrix loaded successfully");
+
+		return matrix;
 	}
 
 	public static Matrix FromCli()
 	{
         var lines = new List<string>();
-        var line = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(line))
+
+		string? line = null;
+        while (string.IsNullOrWhiteSpace(line))
         {
-			throw new Exception("Could not read line");
+	        line = Console.ReadLine();
         }
 
         lines.Add(line);
 
         var dimension = (UInt32) line.Split(' ').Length;
         for (var i = 0; i < dimension - 1; i++)
+		while (lines.Count() < dimension)
         {
             line = Console.ReadLine();
 			if (string.IsNullOrWhiteSpace(line))
 			{
-				throw new Exception("Could not read line");
+				continue;
 			}
 
             lines.Add(line);
         }
 
-        var matrixLines = lines.SelectMany(line => line.Split(',')).ToArray();
-		return Matrix.FromLines(matrixLines);
+        var matrixStringArray = lines.SelectMany(line => line.Split(' ')).Select(line => line.Trim()).ToArray();
+		return Matrix.FromStringArray(matrixStringArray);
 	}
 
 	public void ToFile(string filename)
@@ -171,13 +85,11 @@ public class Matrix
 		{
 			using (var writer = new StreamWriter(file))
 			{
-				var arr = GetArray();
-
 				var builder = new StringBuilder();
-				for (var i = 0; i < arr.Length; i++)
+				var i = 0;
+				foreach (var value in AsTypeEnumerable())
 				{
-					var value = arr.GetValue(i);
-					var str = Convert.ToString(value);
+					var str = Convert.ToString(value, CultureInfo.InvariantCulture.NumberFormat);
 					builder.Append(str);
 
 					if ((i + 1) % Dimension == 0)
@@ -190,6 +102,8 @@ public class Matrix
 					{
 						builder.Append(", ");
 					}
+
+					i += 1;
 				}
 
 				writer.Write(builder);
@@ -199,11 +113,10 @@ public class Matrix
 
 	public void ToCli()
 	{
-		var arr = GetArray();
-		for (var i = 0; i < arr.Length; i++)
+		var i = 0;
+		foreach (var value in AsTypeEnumerable())
 		{
-			var value = arr.GetValue(i);
-			var str = Convert.ToString(value);
+			var str = Convert.ToString(value, CultureInfo.InvariantCulture.NumberFormat);
 			Console.Write(str);
 
 			if ((i + 1) % Dimension == 0)
@@ -214,6 +127,41 @@ public class Matrix
 			{
 				Console.Write(" ");
 			}
+
+			i += 1;
 		}
+	}
+
+	IEnumerable<object> AsTypeEnumerable()
+	{
+		return bytes
+			.Select((b, index) => new { b, index })
+			.GroupBy(x => x.index / TypeSize)
+			.Select(g => TypeConverter.TypeConvertersForType[Type].ToObject(g.Select(g => g.b).ToArray(), 0));
+	}
+
+	static Matrix FromStringArray(string[] stringArray)
+	{
+		var sqrt = Math.Sqrt(stringArray.Length);
+		var dimension = (uint) sqrt;
+
+		if (sqrt != dimension)
+		{
+			throw new Exception($"This is not a square matrix (element count is {stringArray.Length})");
+		}
+
+		var type = TypeChecker.DetermineType(stringArray);
+		var typeSize = TypeConverter.GetTypeSize(type);
+		var bytes = new byte[dimension * dimension * typeSize];
+
+		for (var i = 0; i < stringArray.Length; i++)
+		{
+			var obj = Convert.ChangeType(stringArray[i], type, CultureInfo.InvariantCulture.NumberFormat);
+			var strBytes = TypeConverter.TypeConvertersForType[type].GetBytes(obj);
+
+			strBytes.CopyTo(bytes, i * typeSize);
+		}
+
+		return new Matrix(TypeConverter.GetTypeSize(type), type, dimension, bytes);
 	}
 }

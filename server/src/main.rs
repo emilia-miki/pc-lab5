@@ -17,11 +17,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let listener = TcpListener::bind(format!("{ADDR}:{port}"))?;
+
     println!("Listening on port {port}.");
+
+    let mut id = 0;
     for stream in listener.incoming() {
         let stream = stream?;
-        println!("Got a new connection: {}", stream.peer_addr().unwrap());
-        std::thread::spawn(move || thread::handle_client(stream));
+        let addr = stream.peer_addr().unwrap();
+        println!("Got a new connection: {}", &addr);
+        match std::thread::Builder::new()
+            .name(format!("Client {id} ({})", addr))
+            .spawn(move || thread::handle_client(stream))
+        {
+            Ok(_) => {
+                id += 1;
+            }
+            Err(error) => eprintln!("{}", error),
+        };
     }
 
     Ok(())

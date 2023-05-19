@@ -25,9 +25,17 @@ impl<'a> Executable<'a> for Request {
                     job::Status::Completed => job_manager.get_result(index),
                     _ => None,
                 };
-                Response::GetStatus {
-                    status,
-                    matrix_buffer,
+
+                if matrix_buffer.is_some() {
+                    Response::GetStatus {
+                        status,
+                        matrix_buffer,
+                    }
+                } else {
+                    Response::GetStatus {
+                        status: job::Status::Running,
+                        matrix_buffer: None,
+                    }
                 }
             }
         }
@@ -40,17 +48,26 @@ pub fn handle_client(mut stream: TcpStream) {
     let mut buffer = [0u8; BUFFER_SIZE];
     let mut job_manager = job::new_manager();
 
+    println!(
+        "Serving for {} on a new thread",
+        std::thread::current().name().unwrap()
+    );
+
     loop {
         let request = match Request::from_stream(&mut stream, &mut buffer) {
             Ok(request) => request,
             Err(error) => {
+                if error == "The client disconnected" {
+                    break;
+                }
+
                 eprintln!("{}", error);
                 continue;
             }
         };
 
         let response = request.execute(&mut job_manager);
-        match response.to_stream(&mut stream, &mut buffer) {
+        match response.dump(&mut stream, &mut buffer) {
             Ok(()) => (),
             Err(error) => {
                 eprintln!("{}", error);

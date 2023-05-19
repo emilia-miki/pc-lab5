@@ -3,54 +3,60 @@ public sealed class Constants
     public const string ADDR = "127.0.0.1";
     public const UInt16 PORT = 3333;
 
-    // Don't touch the order! It is very important.
-    // When trying to parse a matrix from string, the program
-    // will go over types in this order, so it will try
-    // parsing into smaller types first, and then go to
-    // larger ones.
-    public static readonly IReadOnlyList<Type> Types = new[]
+    static Constants instance = new Constants();
+    public static Constants Instance { get => instance; }
+
+    IReadOnlyDictionary<Type, byte>? commandEncodings;
+    IReadOnlyDictionary<string, Command>? commandsByString;
+    IReadOnlyDictionary<Command, string>? stringsByCommand;
+
+    public readonly Type[] Commands;
+
+    public IReadOnlyDictionary<Type, byte> GetCommandEncodings()
     {
-        typeof(bool),
-        typeof(byte),
-        typeof(UInt16),
-        typeof(UInt32),
-        typeof(UInt64),
-        typeof(sbyte),
-        typeof(Int16),
-        typeof(Int32),
-        typeof(Int64),
-        typeof(float),
-        typeof(double),
-    };
+        if (commandEncodings == null) {
+            commandEncodings = Commands
+                .Select((type, index) => new { Type = type, Index = index })
+                .ToDictionary(item => item.Type, item => (byte)item.Index);
+        }
 
-    public static readonly IReadOnlyDictionary<Type, byte> TypeEncodings =
-		Types
-		.Select((type, index) => new { Index = index, Type = type })
-	    .ToDictionary(item => item.Type, item => (byte) item.Index);
+        return commandEncodings;
+    }
 
-    // Here the order is also important, but only because it has to
-    // match the server-side specs.
-    public static Type[] Commands = new[]
+    public IReadOnlyDictionary<string, Command> GetCommandsByString()
     {
-        typeof(SendDataCommand),
-        typeof(StartCalculationCommand),
-        typeof(GetStatusCommand),
-    };
+        if (commandsByString == null) {
+            commandsByString = new Dictionary<string, Command>()
+            {
+                { "send_data", (Command) typeof(SendDataCommand).GetMethod("GetInstance")!.Invoke(null, null)! },
+                { "start_calculation", (Command) typeof(StartCalculationCommand).GetMethod("GetInstance")!.Invoke(null, null)! },
+                { "get_status", (Command) typeof(GetStatusCommand).GetMethod("GetInstance")!.Invoke(null, null)! },
+            };
+        }
 
-    public static readonly IReadOnlyDictionary<Type, byte> CommandEncodings =
-        Commands
-        .Select((type, index) => new { Type = type, Index = index })
-        .ToDictionary(item => item.Type, item => (byte) item.Index);
+        return commandsByString;
+    }
 
-    public static readonly IReadOnlyDictionary<string, Type> CommandsByString =
-        new Dictionary<string, Type>()
+    public IReadOnlyDictionary<Command, string> StringsByCommand()
+    {
+        if (stringsByCommand == null) {
+            stringsByCommand = GetCommandsByString()
+                .ToDictionary(pair => pair.Value, pair => pair.Key);
+        }
+
+        return stringsByCommand;
+    }
+
+    static Constants() {}
+    private Constants()
+    {
+        // Here the order is also important, but only because it has to
+        // match the server-side specs.
+        Commands = new[]
         {
-            { "send_data", typeof(SendDataCommand) },
-            { "start_calculation", typeof(StartCalculationCommand) },
-            { "get_status", typeof(GetStatusCommand) },
+            typeof(SendDataCommand),
+            typeof(StartCalculationCommand),
+            typeof(GetStatusCommand),
         };
-
-    public static readonly IReadOnlyDictionary<Type, string> StringsByCommand =
-        CommandsByString
-        .ToDictionary(pair => pair.Value, pair => pair.Key);
+    }
 }

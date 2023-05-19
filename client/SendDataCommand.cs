@@ -1,42 +1,49 @@
 public sealed class SendDataCommand : Command
 {
-	bool isFilenameProvided = false;
-	string filename = null!;
+	string? filename = null!;
 
 	Matrix matrix = null!;
 
-	static readonly SendDataCommand instance = new SendDataCommand();
-	public static SendDataCommand Instance { get => instance; }
+	static SendDataCommand? instance;
+	public static SendDataCommand GetInstance() 
+	{
+		if (instance == null)
+		{
+			instance = new SendDataCommand();
+		}
+
+		return instance;
+	}
 
 	static SendDataCommand() {}
 	private SendDataCommand()
 	{
-		encoding = Constants.CommandEncodings[GetType()];
+		encoding = Constants.Instance.GetCommandEncodings()[GetType()];
 	}
 
 	protected override void ParseTokens()
 	{
+		filename = null;
+
         if (tokens.Length > 2)
         {
-			throw new Exception(
-				$"Too many arguments! Required 0..1, but received {tokens.Length - 1}");
+			throw new Exception("The command takes no more than one argument!");
         }
 
 		if (tokens.Length == 2)
 		{
 			filename = tokens[1];
-			isFilenameProvided = true;
 		}
 	}
 
 	private void ReadMatrix()
 	{
-		matrix = isFilenameProvided ? Matrix.FromFile(filename) : Matrix.FromCli();
+		matrix = filename != null ? Matrix.FromFile(filename) : Matrix.FromCli();
 	}
 
-	private void SetMatrixType()
+	private void SetMatrixTypeSize()
 	{
-		bytes[1] = Constants.TypeEncodings[matrix.Type];
+		bytes[1] = matrix.TypeSize;
 	}
 
 	private void SetMatrixDimension()
@@ -46,17 +53,21 @@ public sealed class SendDataCommand : Command
 
 	private void SetMatrix()
 	{
-		matrix.Bytes.CopyTo(bytes, 6);
+		matrix.Bytes.CopyTo(bytes.AsSpan(6));
 	}
 
 	protected override void PrepareRequestMessage()
 	{
 		ReadMatrix();
 
-		bytes = new byte[1 + 1 + 4 + matrix.Bytes.Length];
+		bufferSize = 1 + 1 + 4 + matrix.Bytes.Length;
+		if (bytes.Length < bufferSize)
+		{
+			bytes = new byte[bufferSize];
+		}
 
 		SetCommand();
-		SetMatrixType();
+		SetMatrixTypeSize();
 		SetMatrixDimension();
 		SetMatrix();
 	}
@@ -75,6 +86,8 @@ public sealed class SendDataCommand : Command
 		}
 
 		var index = GetIndex();
-		state.AddMatrix(index, matrix);
+		state.SendDataSet(index, matrix);
+
+		Console.WriteLine($"Your job was registered at index {index}.");
     }
 }

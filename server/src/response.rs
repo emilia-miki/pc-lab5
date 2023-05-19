@@ -18,22 +18,28 @@ pub enum Response {
 }
 
 impl Response {
-    pub fn to_stream(self, stream: &mut TcpStream, buffer: &mut [u8]) -> Result<(), String> {
+    pub fn dump(self, stream: &mut TcpStream, buffer: &mut [u8]) -> Result<(), String> {
         let mut vec_buffer: Vec<u8>;
         let buffer = match self {
             Response::Error { error } => {
+                println!("Sending an ErrorResponse with error {error}");
+
                 let error = error.as_bytes();
 
                 buffer[0] = 1;
-                buffer[1..].copy_from_slice(error);
+                buffer[1..1 + error.len()].copy_from_slice(error);
                 &buffer[..1 + error.len()]
             }
             Response::StartCalculation => {
-                buffer.copy_from_slice(&[0u8, 0]);
+                println!("Sending a StartCalculationResponse");
+
+                buffer[..1].copy_from_slice(&[0u8]);
                 &buffer[..1]
             }
             Response::SendData { index } => {
-                buffer.copy_from_slice(&[0, index]);
+                println!("Sending a SendDataResponse with index {}", index);
+
+                buffer[..2].copy_from_slice(&[0u8, index]);
                 &buffer[..2]
             }
             Response::GetStatus {
@@ -42,25 +48,40 @@ impl Response {
             } => match (status, matrix_buffer) {
                 (status, None) => match status {
                     Status::NoData => {
-                        buffer.copy_from_slice(&[0, 0]);
+                        println!("Sending a GetStatusResponse with status NoData");
+
+                        buffer[..2].copy_from_slice(&[0u8, 0u8]);
                         &buffer[..2]
                     }
                     Status::Ready => {
-                        buffer.copy_from_slice(&[0, 1]);
+                        println!("Sending a GetStatusResponse with status Ready");
+
+                        buffer[..2].copy_from_slice(&[0u8, 1u8]);
                         &buffer[..2]
                     }
                     Status::Running => {
-                        buffer.copy_from_slice(&[0, 2]);
+                        println!("Sending a GetStatusResponse with status Running");
+
+                        buffer[..2].copy_from_slice(&[0u8, 2u8]);
                         &buffer[..2]
                     }
-                    Status::Completed => Err("The job is completed, but no buffer was provided")?,
+                    Status::Completed => {
+                        let error = "The job is completed, but no buffer was provided";
+
+                        Err(error)?
+                    }
                 },
                 (status, Some(matrix_buffer)) => match status {
                     Status::Completed => {
+                        println!(
+                            "Sending a GetStatusResponse with status Completed and a matrix buffer of length {}",
+                            matrix_buffer.len()
+                        );
+
                         vec_buffer = vec![0u8; 2 + matrix_buffer.len()];
                         let buffer = vec_buffer.as_mut_slice();
-                        buffer.copy_from_slice(&[0, 3]);
-                        buffer.copy_from_slice(matrix_buffer.as_slice());
+                        buffer[..2].copy_from_slice(&[0, 3]);
+                        buffer[2..].copy_from_slice(matrix_buffer.as_slice());
                         buffer
                     }
                     _ => Err("There is a buffer provided, but the job is not completed yet")?,
@@ -74,6 +95,7 @@ impl Response {
         };
 
         if written_count == buffer.len() {
+            println!("{} bytes written to TcpStream", written_count);
             Ok(())
         } else {
             Err(format!(

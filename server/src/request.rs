@@ -13,9 +13,19 @@ pub enum Request {
 impl Request {
     pub fn from_stream(stream: &mut TcpStream, buffer: &mut [u8]) -> Result<Request, String> {
         let read_count = match stream.read(buffer) {
-            Ok(size) => size,
+            Ok(size) => {
+                println!("{size} bytes read from TcpStream");
+
+                size
+            }
             Err(error) => Err(format!("{}", error))?,
         };
+
+        if read_count == 0 {
+            println!("{} disconnected", std::thread::current().name().unwrap());
+
+            Err("The client disconnected")?
+        }
 
         let buffer = &buffer[0..read_count];
 
@@ -50,6 +60,12 @@ impl Request {
                     written_count += read_count;
                 }
 
+                println!(
+                    "Received a SendDataRequest with a matrix with type_size {type_size}, \
+                    dimension {dimension} and buffer length {}",
+                    matrix_buffer.len()
+                );
+
                 Ok(Request::SendData {
                     matrix: Matrix {
                         type_size,
@@ -58,11 +74,22 @@ impl Request {
                     },
                 })
             }
-            1 => Ok(Request::StartCalculation {
-                index: buffer[1],
-                thread_count: buffer[2],
-            }),
-            2 => Ok(Request::GetStatus { index: buffer[1] }),
+            1 => {
+                println!(
+                    "Received a StartCalculationRequest with index {} and thread_count {}",
+                    buffer[1], buffer[2]
+                );
+
+                Ok(Request::StartCalculation {
+                    index: buffer[1],
+                    thread_count: buffer[2],
+                })
+            }
+            2 => {
+                println!("Received a GetStatusRequest with index {}", buffer[1]);
+
+                Ok(Request::GetStatus { index: buffer[1] })
+            }
             code => Err(format!("Unknown request code: {code}")),
         }
     }
