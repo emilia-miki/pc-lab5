@@ -6,44 +6,73 @@ use std::{
         atomic::{AtomicPtr, Ordering},
         Mutex,
     },
-    time,
 };
 
+use crate::matrix_type::MatrixType;
+
 pub struct Matrix {
-    pub type_size: u8,
+    pub m_type: MatrixType,
     pub dimension: u32,
-    pub bytes: Mutex<Option<Vec<u8>>>,
+    pub bytes: Option<Vec<u8>>,
 }
 
-#[derive(Copy, Clone)]
 pub enum Status {
+    NoData,
+    Ready,
+    Running,
+    Completed { matrix: Matrix },
+}
+
+impl Status {
+    fn strip(&self) -> StatusStripped {
+        match self {
+            Status::NoData => StatusStripped::NoData,
+            Status::Ready => StatusStripped::Ready,
+            Status::Running => StatusStripped::Running,
+            Status::Completed { .. } => StatusStripped::Completed,
+        }
+    }
+
+    pub fn encode(&self) -> u8 {
+        self.strip().encode()
+    }
+}
+
+impl std::convert::From<&Status> for String {
+    fn from(value: &Status) -> Self {
+        match value {
+            Status::NoData => String::from("noData"),
+            Status::Ready => String::from("ready"),
+            Status::Running => String::from("running"),
+            Status::Completed { .. } => String::from("completed"),
+        }
+    }
+}
+
+pub enum StatusStripped {
     NoData,
     Ready,
     Running,
     Completed,
 }
 
-impl std::convert::TryFrom<u8> for Status {
-    type Error = String;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Status::NoData),
-            1 => Ok(Status::Ready),
-            2 => Ok(Status::Running),
-            3 => Ok(Status::Completed),
-            _ => Err("Invalid value stored in AtomicStatus".into()),
+impl StatusStripped {
+    pub fn encode(self) -> u8 {
+        match self {
+            StatusStripped::NoData => 0,
+            StatusStripped::Ready => 1,
+            StatusStripped::Running => 2,
+            StatusStripped::Completed => 3,
         }
     }
-}
 
-impl std::convert::From<Status> for u8 {
-    fn from(value: Status) -> Self {
-        match value {
-            Status::NoData => 0,
-            Status::Ready => 1,
-            Status::Running => 2,
-            Status::Completed => 3,
+    pub fn decode(code: u8) -> Option<StatusStripped> {
+        match code {
+            0 => Some(StatusStripped::NoData),
+            1 => Some(StatusStripped::Ready),
+            2 => Some(StatusStripped::Running),
+            3 => Some(StatusStripped::Completed),
+            _ => None,
         }
     }
 }
@@ -53,25 +82,25 @@ struct AtomicStatus {
 }
 
 impl AtomicStatus {
-    pub fn new(status: Status) -> AtomicStatus {
+    pub fn new(status: StatusStripped) -> AtomicStatus {
         AtomicStatus {
-            status: AtomicU8::new(u8::from(status)),
+            status: AtomicU8::new(status.encode()),
         }
     }
 
-    pub fn load(&self) -> Status {
-        Status::try_from(self.status.load(Ordering::Relaxed)).unwrap()
+    pub fn load(&self) -> StatusStripped {
+        StatusStripped::decode(self.status.load(Ordering::Relaxed)).unwrap()
     }
 
-    pub fn store(&self, status: Status) {
-        self.status.store(u8::from(status), Ordering::Relaxed)
+    pub fn store(&self, status: StatusStripped) {
+        self.status.store(status.encode(), Ordering::Relaxed)
     }
 }
 
 struct Job {
     status: AtomicStatus,
     thread_count: AtomicU8,
-    matrix: Matrix,
+    matrix: Mutex<Matrix>,
 }
 
 pub struct JobManager {
@@ -84,9 +113,9 @@ const DEFAULT_THREAD_COUNT: u8 = 4;
 impl JobManager {
     pub fn add_job(&mut self, matrix: Matrix) -> u8 {
         let job = Arc::new(Job {
-            status: AtomicStatus::new(Status::Ready),
+            status: AtomicStatus::new(StatusStripped::Ready),
             thread_count: AtomicU8::new(DEFAULT_THREAD_COUNT),
-            matrix,
+            matrix: Mutex::new(matrix),
         });
 
         let index = self.job_iterator;
@@ -108,24 +137,24 @@ impl JobManager {
             thread_count = job.thread_count.load(Ordering::Relaxed);
         }
 
-        let job_start_time = time::Instant::now();
-
-        job.status.store(Status::Running);
+        job.status.store(StatusStripped::Running);
 
         let job_arc = Arc::clone(job);
-        let spawning_thread_name = String::from(std::thread::current().name().unwrap());
         std::thread::spawn(move || {
-            let spawning_thread_name = &spawning_thread_name;
-
-            let mut matrix_vec = {
-                let mut matrix_buffer = job_arc.matrix.bytes.lock().unwrap();
-                matrix_buffer.take().unwrap()
+            let m_type: MatrixType;
+            let dimension: usize;
+            let mut matrix_vec: Vec<u8>;
+            {
+                let mut matrix = job_arc.matrix.lock().unwrap();
+                m_type = matrix.m_type;
+                dimension = matrix.dimension as usize;
+                matrix_vec = matrix.bytes.take().unwrap()
             };
+            let type_size = m_type.get_type_size() as usize;
             let matrix_ptr = Arc::new(AtomicPtr::new(matrix_vec.as_mut_ptr()));
 
             let job_arc = &job_arc;
             std::thread::scope(move |s| {
-                let type_size = job_arc.matrix.type_size as usize;
                 let thread_count = thread_count as usize;
                 let mut threads: Vec<std::thread::ScopedJoinHandle<()>> =
                     Vec::with_capacity(thread_count);
@@ -134,9 +163,7 @@ impl JobManager {
                     let matrix_ptr = Arc::clone(&matrix_ptr);
                     threads.push(s.spawn(move || {
                         let matrix_ptr = matrix_ptr.load(Ordering::Relaxed);
-
                         let index = i;
-                        let dimension = job_arc.matrix.dimension as usize;
 
                         let mut taken = 0;
                         for i in 0..dimension {
@@ -177,53 +204,61 @@ impl JobManager {
             });
 
             {
-                let mut matrix_buffer_opt = job_arc.matrix.bytes.lock().unwrap();
-                let _ = matrix_buffer_opt.insert(matrix_vec);
+                let _ = job_arc.matrix.lock().unwrap().bytes.insert(matrix_vec);
             }
 
-            job_arc.status.store(Status::Completed);
-
-            let job_end_time = time::Instant::now();
-            println!(
-                "{}: It took {} ms to complete the calculation",
-                spawning_thread_name,
-                (job_end_time - job_start_time).as_millis()
-            );
+            job_arc.status.store(StatusStripped::Completed);
         });
 
         Ok(())
     }
 
-    pub fn get_status(&self, index: u8) -> Status {
+    pub fn get_status(&mut self, index: u8) -> Status {
         match self.jobs.get(&index) {
-            Some(job) => job.status.load(),
+            Some(job) => match job.status.load() {
+                StatusStripped::NoData => Status::NoData,
+                StatusStripped::Ready => Status::Ready,
+                StatusStripped::Running => Status::Running,
+                StatusStripped::Completed => match self.get_matrix(index) {
+                    Some(matrix) => Status::Completed { matrix },
+                    None => Status::Running,
+                },
+            },
             None => Status::NoData,
         }
     }
 
-    pub fn get_result(&mut self, index: u8) -> Option<Vec<u8>> {
-        let job = self.jobs.remove(&index)?;
+    fn get_matrix(&mut self, index: u8) -> Option<Matrix> {
+        let is_none = {
+            self.jobs
+                .get(&index)
+                .unwrap()
+                .matrix
+                .lock()
+                .unwrap()
+                .bytes
+                .is_none()
+        };
+
+        if is_none {
+            return None;
+        }
+
+        let job = self.jobs.remove(&index).unwrap();
         let job = match Arc::try_unwrap(job) {
             Ok(job) => job,
             Err(_) => {
-                eprintln!("Arc value is more than one, but the job is marked as completed");
-
-                return None;
+                panic!("Arc value is more than one, even though the job is marked as completed")
             }
         };
 
-        let mut matrix_buffer = job.matrix.bytes.lock().unwrap();
-        if matrix_buffer.is_none() {
-            return None;
-        };
-
-        matrix_buffer.take()
+        Some(job.matrix.into_inner().unwrap())
     }
 }
 
 pub fn new_manager() -> JobManager {
     JobManager {
-        job_iterator: 0,
+        job_iterator: 1,
         jobs: HashMap::<u8, Arc<Job>>::new(),
     }
 }

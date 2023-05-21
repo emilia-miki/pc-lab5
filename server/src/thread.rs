@@ -1,63 +1,20 @@
-use std::{eprintln, net::TcpStream};
+use std::{
+    eprintln,
+    net::TcpStream,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
-use crate::{job, request::Request, response::Response};
-
-trait Executable<'a> {
-    fn execute(self, job_manager: &mut job::JobManager) -> Response;
-}
-
-impl<'a> Executable<'a> for Request {
-    fn execute(self, job_manager: &mut job::JobManager) -> Response {
-        match self {
-            Request::SendData { matrix } => Response::SendData {
-                index: job_manager.add_job(matrix),
-            },
-            Request::StartCalculation {
-                index,
-                thread_count,
-            } => match job_manager.start_job(index, thread_count) {
-                Ok(()) => Response::StartCalculation,
-                Err(error) => Response::Error { error },
-            },
-            Request::GetStatus { index } => {
-                let status = job_manager.get_status(index);
-                let matrix_buffer = match status {
-                    job::Status::Completed => job_manager.get_result(index),
-                    _ => None,
-                };
-
-                if matrix_buffer.is_some() {
-                    Response::GetStatus {
-                        status,
-                        matrix_buffer,
-                    }
-                } else {
-                    Response::GetStatus {
-                        status: job::Status::Running,
-                        matrix_buffer: None,
-                    }
-                }
-            }
-        }
-    }
-}
+use crate::{job, request::Request};
 
 pub fn handle_client(mut stream: TcpStream) {
-    const BUFFER_SIZE: usize = 1500;
-
-    let mut buffer = [0u8; BUFFER_SIZE];
     let mut job_manager = job::new_manager();
-
-    println!(
-        "Serving for {} on a new thread",
-        std::thread::current().name().unwrap()
-    );
+    let id: u16 = str::parse(std::thread::current().name().unwrap()).unwrap();
 
     loop {
-        let request = match Request::from_stream(&mut stream, &mut buffer) {
+        let request = match Request::from_stream(&mut stream) {
             Ok(request) => request,
             Err(error) => {
-                if error == "The client disconnected" {
+                if error.to_string() == "The client disconnected" {
                     break;
                 }
 
@@ -65,14 +22,30 @@ pub fn handle_client(mut stream: TcpStream) {
                 continue;
             }
         };
+        println!("{}", request.to_json_string(id));
 
         let response = request.execute(&mut job_manager);
-        match response.dump(&mut stream, &mut buffer) {
+        let response_json = response.to_json_string(id);
+        match response.send(&mut stream) {
             Ok(()) => (),
             Err(error) => {
                 eprintln!("{}", error);
                 continue;
             }
         }
+        let time_stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let pattern = r#""time":"#;
+        let start_index = response_json.find(pattern).unwrap() + pattern.len();
+        let end_index = start_index + response_json[start_index..].find(',').unwrap();
+        let response_json = format!(
+            "{}{}{}",
+            &response_json[..start_index],
+            time_stamp,
+            &response_json[end_index..]
+        );
+        println!("{}", response_json);
     }
 }

@@ -1,4 +1,5 @@
 mod job;
+mod matrix_type;
 mod request;
 mod response;
 mod thread;
@@ -17,21 +18,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let listener = TcpListener::bind(format!("{ADDR}:{port}"))?;
+    println!(r#"{{"kind":"listen","port":{port}}}"#);
 
-    println!("Listening on port {port}.");
-
-    let mut id = 0;
     for stream in listener.incoming() {
         let stream = stream?;
         let addr = stream.peer_addr().unwrap();
-        println!("Got a new connection: {}", &addr);
+        let port = addr.port();
+        println!(r#"{{"kind":"accept","port":{port}}}"#);
+
         match std::thread::Builder::new()
-            .name(format!("Client {id} ({})", addr))
+            .name(format!("{port}"))
             .spawn(move || thread::handle_client(stream))
         {
-            Ok(_) => {
-                id += 1;
-            }
+            Ok(_) => (),
             Err(error) => eprintln!("{}", error),
         };
     }

@@ -1,108 +1,106 @@
 use std::io::Write;
 use std::net::TcpStream;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::job::Status;
 
 pub enum Response {
-    Error {
-        error: String,
-    },
-    SendData {
-        index: u8,
-    },
+    SendData { index: u8 },
     StartCalculation,
-    GetStatus {
-        status: Status,
-        matrix_buffer: Option<Vec<u8>>,
-    },
+    GetStatus { status: Status },
+    Error { error: String },
 }
 
 impl Response {
-    pub fn dump(self, stream: &mut TcpStream, buffer: &mut [u8]) -> Result<(), String> {
-        let mut vec_buffer: Vec<u8>;
+    fn encode(&self) -> u8 {
+        match self {
+            Response::SendData { .. } => 0,
+            Response::StartCalculation => 1,
+            Response::GetStatus { .. } => 2,
+            Response::Error { .. } => 3,
+        }
+    }
+
+    pub fn send(self, stream: &mut TcpStream) -> Result<(), String> {
+        let response_code = self.encode();
+
         let buffer = match self {
+            Response::SendData { index } => vec![response_code, index],
+            Response::StartCalculation => vec![response_code],
+            Response::GetStatus { status } => {
+                let status_code = status.encode();
+
+                match status {
+                    Status::Completed { matrix } => {
+                        let matrix_buffer = matrix.bytes.unwrap();
+                        let mut buffer = vec![0u8; 7 + matrix_buffer.len()];
+                        buffer[..3].copy_from_slice(
+                            &[
+                                response_code,
+                                status_code,
+                                matrix.m_type.try_into().unwrap(),
+                            ][..],
+                        );
+                        buffer[3..7].copy_from_slice(&matrix.dimension.to_le_bytes());
+                        buffer[7..].copy_from_slice(&matrix_buffer);
+                        buffer
+                    }
+                    _ => vec![response_code, status_code],
+                }
+            }
             Response::Error { error } => {
                 println!("Sending an ErrorResponse with error {error}");
 
                 let error = error.as_bytes();
 
-                buffer[0] = 1;
-                buffer[1..1 + error.len()].copy_from_slice(error);
-                &buffer[..1 + error.len()]
+                let mut buffer = vec![0u8; 2 + error.len()];
+                buffer[..2].copy_from_slice(&[response_code, error.len() as u8][..]);
+                buffer[2..].copy_from_slice(error);
+                buffer
             }
-            Response::StartCalculation => {
-                println!("Sending a StartCalculationResponse");
-
-                buffer[..1].copy_from_slice(&[0u8]);
-                &buffer[..1]
-            }
-            Response::SendData { index } => {
-                println!("Sending a SendDataResponse with index {}", index);
-
-                buffer[..2].copy_from_slice(&[0u8, index]);
-                &buffer[..2]
-            }
-            Response::GetStatus {
-                status,
-                matrix_buffer,
-            } => match (status, matrix_buffer) {
-                (status, None) => match status {
-                    Status::NoData => {
-                        println!("Sending a GetStatusResponse with status NoData");
-
-                        buffer[..2].copy_from_slice(&[0u8, 0u8]);
-                        &buffer[..2]
-                    }
-                    Status::Ready => {
-                        println!("Sending a GetStatusResponse with status Ready");
-
-                        buffer[..2].copy_from_slice(&[0u8, 1u8]);
-                        &buffer[..2]
-                    }
-                    Status::Running => {
-                        println!("Sending a GetStatusResponse with status Running");
-
-                        buffer[..2].copy_from_slice(&[0u8, 2u8]);
-                        &buffer[..2]
-                    }
-                    Status::Completed => {
-                        let error = "The job is completed, but no buffer was provided";
-
-                        Err(error)?
-                    }
-                },
-                (status, Some(matrix_buffer)) => match status {
-                    Status::Completed => {
-                        println!(
-                            "Sending a GetStatusResponse with status Completed and a matrix buffer of length {}",
-                            matrix_buffer.len()
-                        );
-
-                        vec_buffer = vec![0u8; 2 + matrix_buffer.len()];
-                        let buffer = vec_buffer.as_mut_slice();
-                        buffer[..2].copy_from_slice(&[0, 3]);
-                        buffer[2..].copy_from_slice(matrix_buffer.as_slice());
-                        buffer
-                    }
-                    _ => Err("There is a buffer provided, but the job is not completed yet")?,
-                },
-            },
         };
 
-        let written_count = match stream.write(buffer) {
+        let _ = match stream.write(&buffer) {
             Ok(size) => size,
             Err(error) => Err(format!("{}", error))?,
         };
 
-        if written_count == buffer.len() {
-            println!("{} bytes written to TcpStream", written_count);
-            Ok(())
-        } else {
-            Err(format!(
-                "Only {} bytes written to TcpStream out of {}",
-                written_count,
-                buffer.len()
-            ))
-        }
+        Ok(())
+    }
+
+    pub fn to_json_string(&self, client_id: u16) -> String {
+        format!(
+            r#"{{"client":{},"time":{},"kind":"{}","type":"{}","payload":{}}}"#,
+            client_id,
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+            "response",
+            match self {
+                Response::SendData { .. } => "sendData",
+                Response::StartCalculation => "startCalculation",
+                Response::GetStatus { .. } => "getStatus",
+                Response::Error { .. } => "error",
+            },
+            match self {
+                Response::SendData { index } => format!(r#"{{"index":{}}}"#, index),
+                Response::StartCalculation => format!(r#"{{}}"#),
+                Response::GetStatus { status } => {
+                    match status {
+                        Status::Completed { matrix } => {
+                            format!(
+                                r#"{{"status":"{}","type":"{}","dimension":{}}}"#,
+                                String::from(status),
+                                String::from(matrix.m_type),
+                                matrix.dimension
+                            )
+                        }
+                        status => format!(r#"{{"status":"{}"}}"#, String::from(status)),
+                    }
+                }
+                Response::Error { error } => format!(r#"{{"message":"{}"}}"#, error),
+            }
+        )
     }
 }
