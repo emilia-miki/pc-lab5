@@ -35,9 +35,9 @@ thread, spawning a new thread for each connection.
 - [threads.rs](server/src/thread.rs) handles a client connection.
 - [job.rs](server/src/job.rs) handles client tasks.
 - [request.rs](server/src/request.rs) contains these two notable functions:
-  - from_stream --- reads the TCP stream and parses the request
+  - from_stream - reads the TCP stream and parses the request
   according to the application protocol;
-  - execute --- calls the JobManager in the appropriate way for the request
+  - execute - calls the JobManager in the appropriate way for the request
   and returns back the response.
 - [response.rs](server/src/response.rs) has a send function that encodes
 the request according to the application protocol and writes it to the TCP
@@ -51,23 +51,23 @@ one request.
 - The client must not send new requests before receiving a response for the
 previous one (undefined behavior).
 - The first byte of any message is the message code:
-  - 0 --- reserve,
-  - 1 --- calc
-  - 2 --- poll
-  - 3 --- error
+  - 0 - reserve,
+  - 1 - calc
+  - 2 - poll
+  - 3 - error
   The error code 3 is only valid for responses.
 - reserve request:
   - the second byte must be a matrix type code, encoded as follows:
-    - 0 --- u8
-    - 1 --- u16
-    - 2 --- u32
-    - 3 --- u64
-    - 4 --- i8
-    - 5 --- i16
-    - 6 --- i32
-    - 7 --- i64
-    - 8 --- f32
-    - 9 --- f64
+    - 0 - u8
+    - 1 - u16
+    - 2 - u32
+    - 3 - u64
+    - 4 - i8
+    - 5 - i16
+    - 6 - i32
+    - 7 - i64
+    - 8 - f32
+    - 9 - f64
   - the third to sixth bytes are a 32-bit number indicating the matrix dimension
   (one is enough, because the server does matrix transposition and all the matrices
   have to be square matrices)
@@ -87,10 +87,10 @@ previous one (undefined behavior).
   - the first byte is the task index
 - poll response
   - the first byte is the status code:
-    - 0 --- no data
-    - 1 --- reserved
-    - 2 --- running
-    - 3 --- completed
+    - 0 - no data
+    - 1 - reserved
+    - 2 - running
+    - 3 - completed
   - if the status code is 3, the following bytes are the matrix data, row by row.
 - error response
   - the first byte is the length of the error message
