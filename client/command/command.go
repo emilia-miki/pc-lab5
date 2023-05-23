@@ -1,45 +1,47 @@
 package command
 
-import "fmt"
-
-const SUPPORTED_COMMANDS string = "sendData, startCalculation, getStatus, closeConnection"
+import (
+	"fmt"
+	"strings"
+)
 
 type Command uint8
 
 const (
-	SendData Command = iota
-	StartCalculation
-	GetStatus
-	CloseConnection
+	Reserve Command = iota
+	Calc
+	Poll
+	Close
 )
 
 func (command Command) String() string {
 	switch command {
-	case SendData:
-		return "sendData"
-	case StartCalculation:
-		return "startCalculation"
-	case GetStatus:
-		return "getStatus"
-	case CloseConnection:
-		return "closeConnection"
+	case Reserve:
+		return "reserve"
+	case Calc:
+		return "calc"
+	case Poll:
+		return "poll"
+	case Close:
+		return "close"
 	}
 
 	return "undefined"
 }
 
+func getSupportedCommands() []string {
+	return []string{"reserve", "calc", "poll", "close"}
+}
+
 func CommandFromString(str string) (cmd Command, err error) {
-	switch str {
-	case "sendData":
-		return SendData, nil
-	case "startCalculation":
-		return StartCalculation, nil
-	case "getStatus":
-		return GetStatus, nil
-	case "closeConnection":
-		return CloseConnection, nil
+	for i := uint8(0); i <= uint8(Close); i++ {
+		cmd = Command(i)
+		if str == cmd.String() {
+			return
+		}
 	}
 
-	err = fmt.Errorf("Unknown command: %s. Known commands are: %s.", str, SUPPORTED_COMMANDS)
+	err = fmt.Errorf("Unknown command: %s. Known commands are: %s",
+		str, strings.Join(getSupportedCommands(), " "))
 	return
 }

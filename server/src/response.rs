@@ -1,68 +1,61 @@
+use std::error::Error;
+use std::format;
 use std::io::Write;
 use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::job::Status;
+use crate::status::Status;
 
 pub enum Response {
-    SendData { index: u8 },
-    StartCalculation,
-    GetStatus { status: Status },
+    Reserve { index: u8 },
+    Calc,
+    Poll { status: Status },
     Error { error: String },
 }
 
-impl Response {
-    fn encode(&self) -> u8 {
-        match self {
-            Response::SendData { .. } => 0,
-            Response::StartCalculation => 1,
-            Response::GetStatus { .. } => 2,
+impl std::convert::From<&Response> for u8 {
+    fn from(value: &Response) -> Self {
+        match value {
+            Response::Reserve { .. } => 0,
+            Response::Calc => 1,
+            Response::Poll { .. } => 2,
             Response::Error { .. } => 3,
         }
     }
+}
 
-    pub fn send(self, stream: &mut TcpStream) -> Result<(), String> {
-        let response_code = self.encode();
+impl std::convert::From<&Response> for String {
+    fn from(value: &Response) -> Self {
+        match value {
+            Response::Reserve { .. } => String::from("reserve"),
+            Response::Calc => String::from("calc"),
+            Response::Poll { .. } => String::from("poll"),
+            Response::Error { .. } => String::from("error"),
+        }
+    }
+}
 
-        let buffer = match self {
-            Response::SendData { index } => vec![response_code, index],
-            Response::StartCalculation => vec![response_code],
-            Response::GetStatus { status } => {
-                let status_code = status.encode();
+impl Response {
+    pub fn send(self, stream: &mut TcpStream) -> Result<(), Box<dyn Error>> {
+        let response_code = u8::from(&self);
+        stream.write_all(&[response_code])?;
 
-                match status {
-                    Status::Completed { matrix } => {
-                        let matrix_buffer = matrix.bytes.unwrap();
-                        let mut buffer = vec![0u8; 7 + matrix_buffer.len()];
-                        buffer[..3].copy_from_slice(
-                            &[
-                                response_code,
-                                status_code,
-                                matrix.m_type.try_into().unwrap(),
-                            ][..],
-                        );
-                        buffer[3..7].copy_from_slice(&matrix.dimension.to_le_bytes());
-                        buffer[7..].copy_from_slice(&matrix_buffer);
-                        buffer
-                    }
-                    _ => vec![response_code, status_code],
+        match self {
+            Response::Reserve { index } => stream.write_all(&[index])?,
+            Response::Calc => (),
+            Response::Poll { status } => {
+                let status_code = u8::from(&status);
+                stream.write_all(&[status_code])?;
+
+                if let Status::Completed { matrix_bytes } = status {
+                    stream.write_all(&matrix_bytes)?;
                 }
             }
             Response::Error { error } => {
-                println!("Sending an ErrorResponse with error {error}");
-
                 let error = error.as_bytes();
-
-                let mut buffer = vec![0u8; 2 + error.len()];
-                buffer[..2].copy_from_slice(&[response_code, error.len() as u8][..]);
-                buffer[2..].copy_from_slice(error);
-                buffer
+                stream.write_all(&[error.len() as u8])?;
+                stream.write_all(error)?;
             }
-        };
-
-        let _ = match stream.write(&buffer) {
-            Ok(size) => size,
-            Err(error) => Err(format!("{}", error))?,
         };
 
         Ok(())
@@ -70,36 +63,31 @@ impl Response {
 
     pub fn to_json_string(&self, client_id: u16) -> String {
         format!(
-            r#"{{"client":{},"time":{},"kind":"{}","type":"{}","payload":{}}}"#,
+            r#"{{"client":"{}","time":"{}","kind":"{}",{}}}"#,
             client_id,
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos(),
             "response",
-            match self {
-                Response::SendData { .. } => "sendData",
-                Response::StartCalculation => "startCalculation",
-                Response::GetStatus { .. } => "getStatus",
-                Response::Error { .. } => "error",
-            },
-            match self {
-                Response::SendData { index } => format!(r#"{{"index":{}}}"#, index),
-                Response::StartCalculation => format!(r#"{{}}"#),
-                Response::GetStatus { status } => {
-                    match status {
-                        Status::Completed { matrix } => {
-                            format!(
-                                r#"{{"status":"{}","type":"{}","dimension":{}}}"#,
-                                String::from(status),
-                                String::from(matrix.m_type),
-                                matrix.dimension
-                            )
+            {
+                let mut json = format!(r#""type":"{}""#, String::from(self));
+                match self {
+                    Response::Reserve { index } => {
+                        json = format!(r#"{},"index":"{}""#, json, index)
+                    }
+                    Response::Calc => (),
+                    Response::Poll { status } => {
+                        json = format!(r#"{},"status":"{}""#, json, String::from(status));
+                        if let Status::Completed { matrix_bytes } = status {
+                            json = format!(r#"{},"bytes":"{}""#, json, matrix_bytes.len());
                         }
-                        status => format!(r#"{{"status":"{}"}}"#, String::from(status)),
+                    }
+                    Response::Error { error } => {
+                        json = format!(r#"{},"message":"{}""#, json, error)
                     }
                 }
-                Response::Error { error } => format!(r#"{{"message":"{}"}}"#, error),
+                json
             }
         )
     }

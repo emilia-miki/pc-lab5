@@ -27,10 +27,11 @@ func (status Status) String() string {
 }
 
 func Decode(code uint8) (status Status, err error) {
-	if uint8(Completed) < code {
-		err = fmt.Errorf("Unknown status code: %d.", code)
+	if code > uint8(Completed) {
+		err = fmt.Errorf("Unknown status code: %d", code)
 		return
 	}
 
-	return Status(code), nil
+	status = Status(code)
+	return
 }

@@ -1,246 +1,137 @@
 package matrix
 
 import (
-	"bufio"
 	"client/constants"
 	"client/matrix/mtype"
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"strings"
-	"unsafe"
 )
+
+const CHUNK_SIZE = 1500
 
 type Matrix struct {
 	Type      mtype.MatrixType
 	Dimension uint32
-	Bytes     []uint8
+	FilePath  string
 }
 
-func FromFile(mType mtype.MatrixType, mFileName string) (matrix Matrix, err error) {
-	mFileHandle, err := os.Open(mFileName)
+func (matrix Matrix) GetByteLen() uint64 {
+	return uint64(matrix.Type.GetByteSize()) * uint64(matrix.Dimension) * uint64(matrix.Dimension)
+}
+
+func (matrix Matrix) String() string {
+	return fmt.Sprintf("%dx%d matrix of type %s", matrix.Dimension, matrix.Dimension, matrix.Type)
+}
+
+func (matrix Matrix) FromTCPStreamToFile(con net.Conn) error {
+	clientId := uint16(con.LocalAddr().(*net.TCPAddr).Port)
+	downloadsFolder := fmt.Sprintf("%s/%d", constants.DOWNLOADS_FOLDER, clientId)
+	os.Mkdir(downloadsFolder, os.ModeDir|os.ModePerm)
+
+	originalFilePathParts := strings.Split(matrix.FilePath, "/")
+	originalFileName := originalFilePathParts[len(originalFilePathParts)-1]
+	downloadedFileName := fmt.Sprintf("%s/%s", downloadsFolder, originalFileName)
+
+	downloadedFile, err := os.Create(downloadedFileName)
 	if err != nil {
-		err = fmt.Errorf("Error opening file %s: %s.", mFileName, err)
-		return
+		return fmt.Errorf("Error creating file %s: %s", downloadedFileName, err)
 	}
+	defer downloadedFile.Close()
 
-	defer mFileHandle.Close()
+	chunks := make(chan []uint8)
+	defer close(chunks)
 
-	scanner := bufio.NewScanner(mFileHandle)
-	scanner.Scan()
+	matrixByteLen := matrix.GetByteLen()
+	chunkCount := uint32((matrixByteLen-1)/CHUNK_SIZE + 1)
+	go func() {
+		leftToRead := matrixByteLen
+		for i := uint32(0); i < chunkCount; i++ {
+			var chunkLen int
+			if leftToRead < CHUNK_SIZE {
+				chunkLen = int(leftToRead)
+			} else {
+				chunkLen = CHUNK_SIZE
+			}
+			leftToRead -= uint64(chunkLen)
 
-	firstString := scanner.Text()
-	tokens := strings.FieldsFunc(firstString, func(r rune) bool { return r == ',' || r == '\n' })
+			chunk := make([]uint8, chunkLen)
 
-	mTypeSize, err := mType.GetByteSize()
-	if err != nil {
-		return
-	}
+			totalN := 0
+			for totalN < chunkLen {
+				n, err := con.Read(chunk[totalN:])
 
-	mDimension := uint32(len(tokens))
-	var sendDataRequestPreludeSize uint8 = 1 + 1 + 4
-	matrix = Matrix{
-		Type:      mType,
-		Dimension: mDimension,
-		Bytes:     make([]uint8, uint32(mTypeSize)*mDimension*mDimension+uint32(sendDataRequestPreludeSize)),
-	}
-
-	for i := uint32(0); i < mDimension; i++ {
-		for j, token := range tokens {
-			index := uint32(sendDataRequestPreludeSize) + (i*mDimension+uint32(j))*uint32(mTypeSize)
-			mPointer := unsafe.Pointer(&matrix.Bytes[index])
-
-			switch mType {
-			case mtype.U8, mtype.U16, mtype.U32, mtype.U64:
-				var res uint64
-				res, err = strconv.ParseUint(token, 10, 8*int(mTypeSize))
-				switch mType {
-				case mtype.U8:
-					*(*uint8)(mPointer) = uint8(res)
-					break
-				case mtype.U16:
-					*(*uint16)(mPointer) = uint16(res)
-					break
-				case mtype.U32:
-					*(*uint32)(mPointer) = uint32(res)
-					break
-				case mtype.U64:
-					*(*uint64)(mPointer) = uint64(res)
-					break
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error reading chunk %d from TCP stream: %s\n", i, err)
 				}
-				break
-			case mtype.I8, mtype.I16, mtype.I32, mtype.I64:
-				var res int64
-				res, err = strconv.ParseInt(token, 10, 8*int(mTypeSize))
-				switch mType {
-				case mtype.I8:
-					*(*int8)(mPointer) = int8(res)
-					break
-				case mtype.I16:
-					*(*int16)(mPointer) = int16(res)
-					break
-				case mtype.I32:
-					*(*int32)(mPointer) = int32(res)
-					break
-				case mtype.I64:
-					*(*int64)(mPointer) = int64(res)
-					break
+
+				if uint32(n) == 0 {
+					fmt.Fprintln(os.Stderr, "The server disconnected")
+					os.Exit(1)
 				}
-				break
-			case mtype.F32, mtype.F64:
-				var res float64
-				res, err = strconv.ParseFloat(token, 8*int(mTypeSize))
-				switch mType {
-				case mtype.F32:
-					*(*float32)(mPointer) = float32(res)
-					break
-				case mtype.F64:
-					*(*float64)(mPointer) = float64(res)
-					break
-				}
-				break
+
+				totalN += n
 			}
 
-			if err != nil {
-				err = fmt.Errorf("Error parsing token %s into type %s: %s.", token, mType, err)
-				return
-			}
+			chunks <- chunk
 		}
+	}()
 
-		res := scanner.Scan()
-		if !res {
-			break
-		}
-
-		tokens = strings.FieldsFunc(scanner.Text(), func(r rune) bool { return r == ',' || r == '\n' })
-	}
-
-	return
-}
-
-func FromTCPStream(con net.Conn) (matrix Matrix, err error) {
-	preambleBuffer := [5]uint8{}
-	_, err = con.Read(preambleBuffer[:])
-	if err != nil {
-		return
-	}
-
-	mType, err := mtype.Decode(preambleBuffer[0])
-	if err != nil {
-		return
-	}
-
-	mTypeSize, err := mType.GetByteSize()
-	if err != nil {
-		return
-	}
-
-	var mDimension uint32
-	for i := 0; i < 4; i++ {
-		mDimension |= uint32(preambleBuffer[1+i] >> (i * 8))
-	}
-
-	matrix = Matrix{
-		Type:      mType,
-		Dimension: mDimension,
-		Bytes:     make([]uint8, uint32(mTypeSize)*mDimension*mDimension),
-	}
-
-	read_count, err := con.Read(matrix.Bytes)
-	if read_count != len(matrix.Bytes) {
-		err = fmt.Errorf("Expected to read %d bytes, but got %d", len(matrix.Bytes), read_count)
-		return
-	}
-	return
-}
-
-func (matrix Matrix) ToFile(fileName string) error {
-	_, err := os.Stat(constants.DOWNLOADS_FOLDER)
-	if err != nil {
-		err = os.Mkdir(constants.DOWNLOADS_FOLDER, os.ModePerm)
-
+	for i := uint32(0); i < chunkCount; i++ {
+		_, err = downloadedFile.Write(<-chunks)
 		if err != nil {
-			return err
+			return fmt.Errorf("Error writing to file %s: %s", downloadedFileName, err)
 		}
 	}
 
-	file, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
+func (matrix Matrix) FromFileToTCPStream(con net.Conn) error {
+	file, err := os.Open(matrix.FilePath)
+	if err != nil {
+		return fmt.Errorf("Error opening file %s: %s", matrix.FilePath, err)
+	}
 	defer file.Close()
 
-	mTypeSize, err := matrix.Type.GetByteSize()
-	if err != nil {
-		return err
-	}
+	chunks := make(chan []uint8)
+	defer close(chunks)
 
-	for i := uint32(0); i < matrix.Dimension; i++ {
-		for j := uint32(0); j < matrix.Dimension; j++ {
-			baseIndex := (i*matrix.Dimension + j) * uint32(mTypeSize)
-			mPointer := unsafe.Pointer(&matrix.Bytes[baseIndex])
-			var str string
-
-			switch matrix.Type {
-			case mtype.U8, mtype.U16, mtype.U32, mtype.U64:
-				var orig uint64
-				switch matrix.Type {
-				case mtype.U8:
-					orig = uint64(*(*uint8)(mPointer))
-					break
-				case mtype.U16:
-					orig = uint64(*(*uint16)(mPointer))
-					break
-				case mtype.U32:
-					orig = uint64(*(*uint32)(mPointer))
-					break
-				case mtype.U64:
-					orig = uint64(*(*uint64)(mPointer))
-					break
-				}
-				str = strconv.FormatUint(orig, 10)
-				break
-			case mtype.I8, mtype.I16, mtype.I32, mtype.I64:
-				var orig int64
-				switch matrix.Type {
-				case mtype.I8:
-					orig = int64(*(*int8)(mPointer))
-					break
-				case mtype.U16:
-					orig = int64(*(*int16)(mPointer))
-					break
-				case mtype.U32:
-					orig = int64(*(*int32)(mPointer))
-					break
-				case mtype.U64:
-					orig = int64(*(*int64)(mPointer))
-					break
-				}
-				str = strconv.FormatInt(orig, 10)
-				break
-			case mtype.F32, mtype.F64:
-				var orig float64
-				switch matrix.Type {
-				case mtype.F32:
-					orig = float64(*(*float32)(mPointer))
-					break
-				case mtype.F64:
-					orig = float64(*(*float64)(mPointer))
-					break
-				}
-				str = strconv.FormatFloat(orig, 'f', -1, 8*int(mTypeSize))
-				break
-			}
-
-			if j == matrix.Dimension-1 {
-				str += "\n"
+	matrixByteLen := matrix.GetByteLen()
+	chunkCount := uint32((matrixByteLen-1)/CHUNK_SIZE + 1)
+	go func() {
+		leftToWrite := matrixByteLen
+		for i := uint32(0); i < chunkCount; i++ {
+			var chunkLen uint32
+			if leftToWrite < CHUNK_SIZE {
+				chunkLen = uint32(leftToWrite)
 			} else {
-				str += ","
+				chunkLen = CHUNK_SIZE
+			}
+			leftToWrite -= uint64(chunkLen)
+
+			chunk := make([]uint8, chunkLen)
+
+			_, err := file.Read(chunk)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error reading chunk %d from matrix file: %s\n", i, err)
+				os.Exit(1)
 			}
 
-			file.WriteString(str)
+			chunks <- chunk
+		}
+	}()
+
+	for i := uint32(0); i < chunkCount; i++ {
+		n, err := con.Write(<-chunks)
+
+		if err != nil {
+			return fmt.Errorf("Error writing chunk %d to TCPStream: %s", i, err)
+		}
+
+		if n == 0 {
+			return fmt.Errorf("The server disconnected")
 		}
 	}
 

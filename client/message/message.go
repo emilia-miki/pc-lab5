@@ -1,18 +1,16 @@
 package message
 
 import (
-	"client/constants"
 	"client/matrix"
 	matrixType "client/matrix/mtype"
 	"client/message/kind"
 	messageType "client/message/mtype"
 	"client/status"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"time"
+	"unsafe"
 )
 
 type Message struct {
@@ -35,202 +33,212 @@ func NewRequest(client uint16, mType messageType.MessageType, payload map[string
 	}
 }
 
-func (request *Request) Send(con net.Conn) (err error) {
+var matrices map[uint8]matrix.Matrix = make(map[uint8]matrix.Matrix)
+
+func (request *Request) Execute(con net.Conn) (resp Response, err error) {
+	buffer := [5]uint8{}
+	buffer[0], err = request.Type.Encode()
+	if err != nil {
+		return
+	}
+	con.Write(buffer[:1])
+
+	var parsed uint64
 	switch request.Type {
-	case messageType.SendData:
-		mType, err := matrixType.FromString(request.Payload["type"])
+	case messageType.Reserve:
+		var mType matrixType.MatrixType
+		mType, err = matrixType.FromString(request.Payload["matrixType"])
 		if err != nil {
-			return err
-		}
-
-		matrix, err := matrix.FromFile(mType, request.Payload["file"])
-		if err != nil {
-			return err
-		}
-
-		// the first 6 bytes are emtpy, the rest is filled with the matrix data
-		buffer := matrix.Bytes
-
-		buffer[0], err = request.Type.Encode()
-		if err != nil {
-			return err
-		}
-
-		buffer[1] = matrix.Type.Encode()
-
-		for i := 0; i < 4; i++ {
-			buffer[2+i] |= uint8(matrix.Dimension >> (i * 8))
-		}
-
-		_, err = con.Write(buffer)
-		if err != nil {
-			return err
-		}
-		break
-	case messageType.StartCalculation:
-		buffer := make([]uint8, 3)
-		buffer[0], err = request.Type.Encode()
-		parsed, err := strconv.ParseUint(request.Payload["index"], 10, 8)
-		if err != nil {
-			return err
-		}
-
-		buffer[1] = uint8(parsed)
-
-		parsed, err = strconv.ParseUint(request.Payload["threadCount"], 10, 8)
-		if err != nil {
-			return err
-		}
-
-		buffer[2] = uint8(parsed)
-
-		_, err = con.Write(buffer)
-		if err != nil {
-			return err
-		}
-		break
-	case messageType.GetStatus:
-		buffer := make([]uint8, 2)
-		buffer[0], err = request.Type.Encode()
-		if err != nil {
-			return err
-		}
-
-		parsed, err := strconv.ParseUint(request.Payload["index"], 10, 8)
-		if err != nil {
-			return err
-		}
-
-		buffer[1] = uint8(parsed)
-
-		_, err = con.Write(buffer)
-		if err != nil {
-			return err
-		}
-		break
-	default:
-		return fmt.Errorf("Invalid message type for request: %s.", request.Type)
-	}
-
-	request.Time = time.Now()
-	return nil
-}
-
-func Receive(id uint16, con net.Conn) (response Response, err error) {
-	var unitBuffer = [1]uint8{}
-
-	_, err = con.Read(unitBuffer[:])
-	if err != nil {
-		return
-	}
-
-	var timeStamp time.Time
-	mType, err := messageType.Decode(unitBuffer[0])
-	if err != nil {
-		return
-	}
-
-	payload := map[string]string{}
-
-	switch mType {
-	case messageType.SendData:
-		_, err = con.Read(unitBuffer[:])
-		if err != nil {
+			err = fmt.Errorf("error processing a %s request: %s", request.Type, request.Payload["matrixType"])
 			return
 		}
 
-		payload["index"] = strconv.FormatUint(uint64(unitBuffer[0]), 10)
-		break
-	case messageType.GetStatus:
-		_, err = con.Read(unitBuffer[:])
+		parsed, err = strconv.ParseUint(request.Payload["matrixDimension"], 10, 32)
 		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error parsing matrixDimension: %s", request.Type, err)
+			return
+		}
+		mDimension := uint32(parsed)
+
+		buffer[0] = mType.Encode()
+		*(*uint32)(unsafe.Pointer(&buffer[1])) = mDimension
+		_, err = con.Write(buffer[:5])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
+			return
+		}
+		break
+	case messageType.Calc:
+		parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error parsing index: %s", request.Type, err)
+			return
+		}
+		index := uint8(parsed)
+
+		parsed, err = strconv.ParseUint(request.Payload["threadCount"], 10, 8)
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error parsing threadCount: %s", request.Type, err)
+			return
+		}
+		threadCount := uint8(parsed)
+
+		buffer[0] = index
+		buffer[1] = threadCount
+		_, err = con.Write(buffer[:2])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
+			return
+		}
+
+		matrix, ok := matrices[index]
+		if !ok {
+			err = fmt.Errorf("error processing a %s request: You have to reserve "+
+				"a matrix before requesting calculation", request.Type)
+			return
+		}
+		err = matrix.FromFileToTCPStream(con)
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
+			return
+		}
+		break
+	case messageType.Poll:
+		parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error parsing index: %s", request.Type, err)
+			return
+		}
+		index := uint8(parsed)
+
+		buffer[0] = index
+		_, err = con.Write(buffer[:1])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
+			return
+		}
+		break
+	default:
+		err = fmt.Errorf("Invalid request type: %s", request.Type)
+		return
+	}
+	request.Time = time.Now()
+
+	responsePayload := map[string]string{}
+
+	_, err = con.Read(buffer[:1])
+	if err != nil {
+		err = fmt.Errorf("error reading response type code from TCP stream: %s", err)
+		return
+	}
+	responseCode := buffer[0]
+
+	responseType, err := messageType.Decode(responseCode)
+	if err != nil {
+		return
+	}
+
+	switch responseType {
+	case messageType.Reserve:
+		_, err = con.Read(buffer[:1])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s response: error writing to TCP stream: %s", responseType, err)
+			return
+		}
+
+		index := buffer[0]
+		responsePayload["index"] = strconv.FormatUint(uint64(index), 10)
+
+		var mType matrixType.MatrixType
+		mType, err = matrixType.FromString(request.Payload["matrixType"])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s response: error parsing matrixType: %s", responseType, err)
+			return
+		}
+
+		parsed, err = strconv.ParseUint(request.Payload["matrixDimension"], 10, 32)
+		if err != nil {
+			err = fmt.Errorf("error processing a %s response: error parsing matrixDimension: %s", responseType, err)
+			return
+		}
+		mDimension := uint32(parsed)
+
+		matrices[index] = matrix.Matrix{
+			Type:      mType,
+			Dimension: mDimension,
+			FilePath:  fmt.Sprintf(request.Payload["file"]),
+		}
+		break
+	case messageType.Poll:
+		_, err = con.Read(buffer[:1])
+		if err != nil {
+			err = fmt.Errorf("error processing a %s response: error reading status type code from TCP stream: %s", responseType, err)
 			return
 		}
 
 		var st status.Status
-		st, err = status.Decode(unitBuffer[0])
+		st, err = status.Decode(buffer[0])
 		if err != nil {
 			return
 		}
+		responsePayload["status"] = st.String()
 
-		payload["status"] = st.String()
 		if st == status.Completed {
-			var m matrix.Matrix
-			m, err = matrix.FromTCPStream(con)
+			parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
 			if err != nil {
+				err = fmt.Errorf("error processing a %s response: error parsing index: %s", responseType, err)
+				return
+			}
+			index := uint8(parsed)
+			matrix := matrices[index]
+
+			err = matrix.FromTCPStreamToFile(con)
+			if err != nil {
+				err = fmt.Errorf("error processing a %s response: error downloading the %s from TCP stream: %s", responseType, matrix, err)
 				return
 			}
 
-			timeStamp = time.Now()
-
-			fileName := fmt.Sprintf("%s/%s_%d_%d_matrix.csv",
-				constants.DOWNLOADS_FOLDER, m.Type, m.Dimension, time.Now().UnixNano())
-			err = m.ToFile(fileName)
-			if err != nil {
-				return
-			}
-
-			payload["type"] = m.Type.String()
-			payload["dimension"] = strconv.FormatUint(uint64(m.Dimension), 10)
-			payload["file"] = fileName
+			responsePayload["matrixType"] = matrix.Type.String()
+			responsePayload["matrixDimension"] = strconv.FormatUint(uint64(matrix.Dimension), 10)
+			responsePayload["file"] = matrix.FilePath
 		}
 		break
 	case messageType.Error:
-		_, err = con.Read(unitBuffer[:])
+		_, err = con.Read(buffer[:1])
 		if err != nil {
+			err = fmt.Errorf("error processing an %s response: error reading message length from TCP stream: %s", responseType, err)
 			return
 		}
 
-		len := unitBuffer[0]
+		len := buffer[0]
 		buffer := make([]uint8, len)
 		_, err = con.Read(buffer)
 		if err != nil {
+			err = fmt.Errorf("error processing ar %s response: error reading message from TCP stream: %s", responseType, err)
 			return
 		}
 
-		payload["message"] = string(buffer)
+		responsePayload["message"] = string(buffer)
 		break
 	}
 
-	var defaultTimeStamp time.Time
-	if timeStamp == defaultTimeStamp {
-		timeStamp = time.Now()
-	}
-
-	return Response{
-		Client:  id,
-		Time:    timeStamp,
+	resp = Response{
+		Client:  request.Client,
+		Time:    time.Now(),
 		Kind:    kind.Response,
-		Type:    mType,
-		Payload: payload,
-	}, nil
+		Type:    responseType,
+		Payload: responsePayload,
+	}
+	return
 }
 
 func (message Message) JsonString() string {
-	jsonPayloadBytes, _ := json.Marshal(message.Payload)
-	jsonPayload := string(jsonPayloadBytes)
-
-	patterns := []string{`"index":`, `"dimension":`, `"threadCount":`}
-	for _, pattern := range patterns {
-		startIndex := strings.Index(jsonPayload, pattern)
-		if startIndex == -1 {
-			continue
-		}
-		startIndex += len(pattern)
-		endIndex := strings.Index(jsonPayload[startIndex:], ",")
-		if endIndex == -1 {
-			endIndex = strings.Index(jsonPayload[startIndex:], "}")
-			if endIndex == -1 {
-				continue
-			}
-		}
-		endIndex += startIndex
-		enclosedString := jsonPayload[startIndex:endIndex]
-		jsonPayload = fmt.Sprintf("%s%s%s", jsonPayload[:startIndex],
-			enclosedString[1:len(enclosedString)-1], jsonPayload[endIndex:])
+	jsonPayload := ""
+	for key, value := range message.Payload {
+		jsonPayload += fmt.Sprintf(`,"%s":"%s"`, key, value)
 	}
 
-	return fmt.Sprintf(`{"client":%d,"time":%d,"kind":"%s","type":"%s","payload":%s}`,
+	return fmt.Sprintf(`{"client":"%d","time":"%d","kind":"%s","type":"%s"%s}`,
 		message.Client, message.Time.UnixNano(), message.Kind, message.Type, jsonPayload)
 }
 

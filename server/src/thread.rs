@@ -1,5 +1,5 @@
 use std::{
-    eprintln,
+    eprintln, io,
     net::TcpStream,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -14,38 +14,38 @@ pub fn handle_client(mut stream: TcpStream) {
         let request = match Request::from_stream(&mut stream) {
             Ok(request) => request,
             Err(error) => {
-                if error.to_string() == "The client disconnected" {
+                if error.is::<io::Error>() {
                     break;
                 }
 
-                eprintln!("{}", error);
+                eprintln!("Error parsing request: {}", error);
                 continue;
             }
         };
-        println!("{}", request.to_json_string(id));
+        println!("{}", request.to_json_string());
 
-        let response = request.execute(&mut job_manager);
+        let response = request.execute(&mut job_manager, &mut stream);
         let response_json = response.to_json_string(id);
         match response.send(&mut stream) {
             Ok(()) => (),
             Err(error) => {
-                eprintln!("{}", error);
+                eprintln!("Error sending response: {}", error);
                 continue;
             }
         }
-        let time_stamp = SystemTime::now()
+        let time_on_send = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let pattern = r#""time":"#;
-        let start_index = response_json.find(pattern).unwrap() + pattern.len();
-        let end_index = start_index + response_json[start_index..].find(',').unwrap();
-        let response_json = format!(
-            "{}{}{}",
-            &response_json[..start_index],
-            time_stamp,
-            &response_json[end_index..]
-        );
+
+        let response_json = json_replace(&response_json, "time", &format!("{time_on_send}"));
         println!("{}", response_json);
     }
+}
+
+fn json_replace(json: &str, key: &str, new_value: &str) -> String {
+    let pattern = format!(r#""{key}":""#);
+    let begin = json.find(&pattern).unwrap() + pattern.len();
+    let end = begin + json[begin..].find('"').unwrap();
+    format!("{}{}{}", &json[..begin], new_value, &json[end..])
 }

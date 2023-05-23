@@ -1,129 +1,137 @@
+use std::error::Error;
+use std::io::Read;
 use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{error::Error, io::Read};
 
-use crate::{
-    job::{self, Matrix},
-    matrix_type::MatrixType,
-    response::Response,
-};
+use crate::job::JobManager;
+use crate::{matrix_type::MatrixType, response::Response};
 
 pub enum Request {
-    SendData { matrix: Matrix },
-    StartCalculation { index: u8, thread_count: u8 },
-    GetStatus { index: u8 },
+    Reserve {
+        matrix_type: MatrixType,
+        matrix_dimension: u32,
+    },
+    Calc {
+        index: u8,
+        thread_count: u8,
+    },
+    Poll {
+        index: u8,
+    },
+}
+
+impl std::convert::From<&Request> for String {
+    fn from(value: &Request) -> Self {
+        match value {
+            Request::Reserve { .. } => String::from("reserve"),
+            Request::Calc { .. } => String::from("calc"),
+            Request::Poll { .. } => String::from("poll"),
+        }
+    }
 }
 
 impl Request {
-    pub fn execute(self, job_manager: &mut job::JobManager) -> Response {
-        match self {
-            Request::SendData { matrix } => Response::SendData {
-                index: job_manager.add_job(matrix),
-            },
-            Request::StartCalculation {
-                index,
-                thread_count,
-            } => match job_manager.start_job(index, thread_count) {
-                Ok(()) => Response::StartCalculation,
-                Err(error) => Response::Error { error },
-            },
-            Request::GetStatus { index } => Response::GetStatus {
-                status: job_manager.get_status(index),
-            },
-        }
-    }
-
-    fn read_chunk(stream: &mut TcpStream, buffer: &mut [u8]) -> Result<(), Box<dyn Error>> {
-        let read_count = stream.read(buffer)?;
-
-        if read_count == 0 {
-            Err("The client disconnected")?;
-        }
-
-        if read_count < buffer.len() {
-            Err(format!(
-                "Expected to read {} bytes, but got only {}",
-                buffer.len(),
-                read_count
-            ))?;
-        }
-
-        Ok(())
-    }
-
     pub fn from_stream(stream: &mut TcpStream) -> Result<Request, Box<dyn Error>> {
-        let mut buffer = [0u8; 6];
-        Request::read_chunk(stream, &mut buffer[..1])?;
+        let mut buffer = [0u8; 5];
 
-        match buffer[0] {
+        stream.read_exact(&mut buffer[..1])?;
+        let request_code = buffer[0];
+        match request_code {
             0 => {
-                Request::read_chunk(stream, &mut buffer[1..6])?;
+                stream.read_exact(&mut buffer[..5])?;
 
-                let m_type = MatrixType::try_from(buffer[1])?;
-                let type_size = m_type.get_type_size();
-                let dimension = {
-                    let slice = &buffer[2..6];
+                let matrix_type = MatrixType::try_from(buffer[0])?;
+                let matrix_dimension = {
                     let mut array = [0u8; 4];
-                    array.copy_from_slice(slice);
+                    array.copy_from_slice(&buffer[1..5]);
                     u32::from_le_bytes(array)
                 };
 
-                let expected_len = (u32::from(type_size) * dimension * dimension) as usize;
-                let mut matrix_buffer = vec![0u8; expected_len];
-
-                Request::read_chunk(stream, &mut matrix_buffer)?;
-                matrix_buffer = dbg!(matrix_buffer);
-
-                Ok(Request::SendData {
-                    matrix: Matrix {
-                        m_type,
-                        dimension,
-                        bytes: Some(matrix_buffer),
-                    },
+                Ok(Request::Reserve {
+                    matrix_type,
+                    matrix_dimension,
                 })
             }
             1 => {
-                Request::read_chunk(stream, &mut buffer[1..=2])?;
+                stream.read_exact(&mut buffer[..2])?;
+                let index = buffer[0];
+                let thread_count = buffer[1];
 
-                Ok(Request::StartCalculation {
-                    index: buffer[1],
-                    thread_count: buffer[2],
+                Ok(Request::Calc {
+                    index,
+                    thread_count,
                 })
             }
             2 => {
-                Request::read_chunk(stream, &mut buffer[1..=1])?;
+                stream.read_exact(&mut buffer[..1])?;
+                let index = buffer[0];
 
-                Ok(Request::GetStatus { index: buffer[1] })
+                Ok(Request::Poll { index })
             }
             code => Err(format!("Unknown request code: {code}"))?,
         }
     }
 
-    pub fn to_json_string(&self, client_id: u16) -> String {
+    pub fn execute(self, job_manager: &mut JobManager, stream: &mut TcpStream) -> Response {
+        match self {
+            Request::Reserve {
+                matrix_type,
+                matrix_dimension,
+            } => Response::Reserve {
+                index: job_manager
+                    .reserve(matrix_type, matrix_dimension)
+                    .unwrap_or(0),
+            },
+            Request::Calc {
+                index,
+                thread_count,
+            } => match job_manager.calc(index, thread_count, stream) {
+                Ok(()) => Response::Calc,
+                Err(error) => Response::Error {
+                    error: error.to_string(),
+                },
+            },
+            Request::Poll { index } => Response::Poll {
+                status: job_manager.poll(index),
+            },
+        }
+    }
+
+    pub fn to_json_string(&self) -> String {
         format!(
-            r#"{{"client":{},"time":{},"kind":"{}","type":"{}","payload":{}}}"#,
-            client_id,
+            r#"{{"client":"{}","time":"{}","kind":"{}",{}}}"#,
+            std::thread::current().name().unwrap(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos(),
             "request",
-            match self {
-                Request::SendData { .. } => "sendData",
-                Request::StartCalculation { .. } => "startCalculation",
-                Request::GetStatus { .. } => "getStatus",
-            },
-            match self {
-                Request::SendData { matrix } => format!(
-                    r#"{{"type":"{}","dimension":{}}}"#,
-                    String::from(matrix.m_type),
-                    matrix.dimension
-                ),
-                Request::StartCalculation {
-                    index,
-                    thread_count,
-                } => format!(r#"{{"index":{},"threadCount":{}}}"#, index, thread_count),
-                Request::GetStatus { index } => format!(r#"{{"index":{}}}"#, index),
+            {
+                let mut json = format!(r#""type":"{}""#, String::from(self));
+                match self {
+                    Request::Reserve {
+                        matrix_type,
+                        matrix_dimension,
+                    } => {
+                        json = format!(
+                            r#"{},"matrixType":"{}","matrixDimension":"{}""#,
+                            json,
+                            String::from(*matrix_type),
+                            matrix_dimension
+                        )
+                    }
+                    Request::Calc {
+                        index,
+                        thread_count,
+                    } => {
+                        json = format!(
+                            r#"{},"index":"{}","threadCount":"{}""#,
+                            json, index, thread_count,
+                        )
+                    }
+                    Request::Poll { index } => json = format!(r#"{},"index":"{}""#, json, index),
+                }
+                json
             }
         )
     }

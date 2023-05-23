@@ -5,40 +5,43 @@ import "fmt"
 type MessageType uint8
 
 const (
-	SendData MessageType = iota
-	StartCalculation
-	GetStatus
+	Reserve MessageType = iota
+	Calc
+	Poll
 	Error
 )
 
 func (mType MessageType) String() string {
 	switch mType {
-	case SendData:
-		return "sendData"
-	case StartCalculation:
-		return "startCalculation"
-	case GetStatus:
-		return "getStatus"
+	case Reserve:
+		return "reserve"
+	case Calc:
+		return "calc"
+	case Poll:
+		return "poll"
 	case Error:
 		return "error"
 	}
 
-	return "unknown"
+	return "undefined"
 }
 
-func (mType MessageType) Encode() (uint8, error) {
+func (mType MessageType) Encode() (code uint8, err error) {
 	if mType == Error {
-		return 0, fmt.Errorf("Invalid request type: %s.", mType)
-	}
-
-	return uint8(mType), nil
-}
-
-func Decode(code uint8) (mType MessageType, err error) {
-	if uint8(Error) < code {
-		err = fmt.Errorf("Unknown message type code: %d.", mType)
+		err = fmt.Errorf("Invalid request type: %s", mType)
 		return
 	}
 
-	return MessageType(code), nil
+	code = uint8(mType)
+	return
+}
+
+func Decode(code uint8) (mType MessageType, err error) {
+	if code > uint8(Error) {
+		err = fmt.Errorf("Unknown message type code: %d", code)
+		return
+	}
+
+	mType = MessageType(code)
+	return
 }
