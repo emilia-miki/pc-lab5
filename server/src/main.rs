@@ -24,7 +24,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     for stream in listener.incoming() {
         let stream = stream?;
         let port = stream.peer_addr().unwrap().port();
-        println!(r#"{{"kind":"accept","port":"{port}"}}"#);
 
         match std::thread::Builder::new()
             .name(format!("{port}"))

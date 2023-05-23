@@ -79,9 +79,6 @@ impl Response {
                     Response::Calc => (),
                     Response::Poll { status } => {
                         json = format!(r#"{},"status":"{}""#, json, String::from(status));
-                        if let Status::Completed { matrix_bytes } = status {
-                            json = format!(r#"{},"bytes":"{}""#, json, matrix_bytes.len());
-                        }
                     }
                     Response::Error { error } => {
                         json = format!(r#"{},"message":"{}""#, json, error)

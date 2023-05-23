@@ -1,0 +1,1010 @@
+pc-lab4/testing on  main [!?] via 🐹 v1.20.4
+❯ : ./testing
+Generating matrices for testing
+100x100 matrix of type u8 generated previously
+1000x1000 matrix of type u8 generated previously
+10000x10000 matrix of type u8 generated previously
+100x100 matrix of type u16 generated previously
+1000x1000 matrix of type u16 generated previously
+10000x10000 matrix of type u16 generated previously
+100x100 matrix of type u32 generated previously
+1000x1000 matrix of type u32 generated previously
+10000x10000 matrix of type u32 generated previously
+100x100 matrix of type u64 generated previously
+1000x1000 matrix of type u64 generated previously
+10000x10000 matrix of type u64 generated previously
+100x100 matrix of type i8 generated previously
+1000x1000 matrix of type i8 generated previously
+10000x10000 matrix of type i8 generated previously
+100x100 matrix of type i16 generated previously
+1000x1000 matrix of type i16 generated previously
+10000x10000 matrix of type i16 generated previously
+100x100 matrix of type i32 generated previously
+1000x1000 matrix of type i32 generated previously
+10000x10000 matrix of type i32 generated previously
+100x100 matrix of type i64 generated previously
+1000x1000 matrix of type i64 generated previously
+10000x10000 matrix of type i64 generated previously
+100x100 matrix of type f32 generated previously
+1000x1000 matrix of type f32 generated previously
+10000x10000 matrix of type f32 generated previously
+100x100 matrix of type f64 generated previously
+1000x1000 matrix of type f64 generated previously
+10000x10000 matrix of type f64 generated previously
+Starting the server
+The server is running on port 60980
+Starting 8 concurrent connections
+Client 61012: initialized
+Client 60992: initialized
+Client 61012: running reserve for a 100x100 matrix of type u8
+Client 60992: running reserve for a 100x100 matrix of type u8
+Client 60984: initialized
+Client 60984: running reserve for a 100x100 matrix of type u8
+Client 60988: initialized
+Client 61008: initialized
+Client 60988: running reserve for a 100x100 matrix of type u8
+Client 61000: initialized
+Client 61000: running reserve for a 100x100 matrix of type u8
+Client 61004: initialized
+Client 61004: running reserve for a 100x100 matrix of type u8
+Client 61008: running reserve for a 100x100 matrix of type u8
+Client 60996: initialized
+Client 60996: running reserve for a 100x100 matrix of type u8
+Client 61012: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 7
+Client 61000: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 12
+Client 60992: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 5
+Client 60988: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 3
+Client 61008: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 3
+Client 61004: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 12
+Client 60996: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 4
+Client 60984: running calc for the 100x100 matrix of type u8 on index 1 with threadCount 4
+Client 60992: running poll for the 100x100 matrix of type u8 on index 1
+Client 61012: running poll for the 100x100 matrix of type u8 on index 1
+Client 60988: running poll for the 100x100 matrix of type u8 on index 1
+Client 61000: running poll for the 100x100 matrix of type u8 on index 1
+Client 61004: running poll for the 100x100 matrix of type u8 on index 1
+Client 61008: running poll for the 100x100 matrix of type u8 on index 1
+Client 60996: running poll for the 100x100 matrix of type u8 on index 1
+Client 60984: running poll for the 100x100 matrix of type u8 on index 1
+Client 60992: running reserve for a 1000x1000 matrix of type u8
+Client 61012: running reserve for a 1000x1000 matrix of type u8
+Client 61000: running reserve for a 1000x1000 matrix of type u8
+Client 60988: running reserve for a 1000x1000 matrix of type u8
+Client 61004: running reserve for a 1000x1000 matrix of type u8
+Client 61008: running reserve for a 1000x1000 matrix of type u8
+Client 60996: running reserve for a 1000x1000 matrix of type u8
+Client 60984: running reserve for a 1000x1000 matrix of type u8
+Client 61000: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 6
+Client 60992: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 1
+Client 61012: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 8
+Client 61004: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 6
+Client 61008: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 9
+Client 60988: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 3
+Client 60996: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 10
+Client 60984: running calc for the 1000x1000 matrix of type u8 on index 2 with threadCount 2
+Client 61000: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 60992: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 61012: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 61004: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 60988: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 60996: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 61008: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 60984: running poll for the 1000x1000 matrix of type u8 on index 2
+Client 60992: running reserve for a 10000x10000 matrix of type u8
+Client 61000: running reserve for a 10000x10000 matrix of type u8
+Client 61004: running reserve for a 10000x10000 matrix of type u8
+Client 61012: running reserve for a 10000x10000 matrix of type u8
+Client 60988: running reserve for a 10000x10000 matrix of type u8
+Client 60996: running reserve for a 10000x10000 matrix of type u8
+Client 60984: running reserve for a 10000x10000 matrix of type u8
+Client 60992: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 10
+Client 61008: running reserve for a 10000x10000 matrix of type u8
+Client 61000: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 2
+Client 61004: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 8
+Client 60988: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 4
+Client 61012: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 1
+Client 60984: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 9
+Client 60996: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 6
+Client 61008: running calc for the 10000x10000 matrix of type u8 on index 3 with threadCount 8
+Client 60984: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 61012: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 60992: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 61008: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 61000: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 60988: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 60996: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 61004: running poll for the 10000x10000 matrix of type u8 on index 3
+Client 60984: running reserve for a 100x100 matrix of type u16
+Client 60984: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 8
+Client 60984: running poll for the 100x100 matrix of type u16 on index 4
+Client 60984: running reserve for a 1000x1000 matrix of type u16
+Client 60984: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 6
+Client 60984: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60988: running reserve for a 100x100 matrix of type u16
+Client 60984: running reserve for a 10000x10000 matrix of type u16
+Client 60988: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 8
+Client 60984: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 12
+Client 60988: running poll for the 100x100 matrix of type u16 on index 4
+Client 60988: running reserve for a 1000x1000 matrix of type u16
+Client 60988: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 6
+Client 60988: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 61000: running reserve for a 100x100 matrix of type u16
+Client 61000: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 11
+Client 61000: running poll for the 100x100 matrix of type u16 on index 4
+Client 61004: running reserve for a 100x100 matrix of type u16
+Client 61000: running reserve for a 1000x1000 matrix of type u16
+Client 61004: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 5
+Client 61004: running poll for the 100x100 matrix of type u16 on index 4
+Client 61000: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 9
+Client 61004: running reserve for a 1000x1000 matrix of type u16
+Client 61004: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 1
+Client 61000: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60988: running reserve for a 10000x10000 matrix of type u16
+Client 60988: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 1
+Client 61004: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 61004: running reserve for a 10000x10000 matrix of type u16
+Client 61004: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 5
+Client 61000: running reserve for a 10000x10000 matrix of type u16
+Client 60996: running reserve for a 100x100 matrix of type u16
+Client 61000: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 11
+Client 60996: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 5
+Client 60996: running poll for the 100x100 matrix of type u16 on index 4
+Client 60996: running reserve for a 1000x1000 matrix of type u16
+Client 60996: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 9
+Client 60992: running reserve for a 100x100 matrix of type u16
+Client 60996: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60992: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 2
+Client 61012: running reserve for a 100x100 matrix of type u16
+Client 60992: running poll for the 100x100 matrix of type u16 on index 4
+Client 61012: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 6
+Client 61012: running poll for the 100x100 matrix of type u16 on index 4
+Client 61012: running reserve for a 1000x1000 matrix of type u16
+Client 61008: running reserve for a 100x100 matrix of type u16
+Client 61012: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 3
+Client 61008: running calc for the 100x100 matrix of type u16 on index 4 with threadCount 12
+Client 60992: running reserve for a 1000x1000 matrix of type u16
+Client 61008: running poll for the 100x100 matrix of type u16 on index 4
+Client 60992: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 12
+Client 61008: running reserve for a 1000x1000 matrix of type u16
+Client 61008: running calc for the 1000x1000 matrix of type u16 on index 5 with threadCount 8
+Client 61012: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60992: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60996: running reserve for a 10000x10000 matrix of type u16
+Client 60996: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 4
+Client 61008: running poll for the 1000x1000 matrix of type u16 on index 5
+Client 60992: running reserve for a 10000x10000 matrix of type u16
+Client 60992: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 2
+Client 61012: running reserve for a 10000x10000 matrix of type u16
+Client 61012: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 12
+Client 61008: running reserve for a 10000x10000 matrix of type u16
+Client 61008: running calc for the 10000x10000 matrix of type u16 on index 6 with threadCount 1
+Client 61004: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 60992: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 60988: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 60996: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 60984: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 61000: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 61012: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 61008: running poll for the 10000x10000 matrix of type u16 on index 6
+Client 60984: running reserve for a 100x100 matrix of type u32
+Client 60984: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 9
+Client 60984: running poll for the 100x100 matrix of type u32 on index 7
+Client 60984: running reserve for a 1000x1000 matrix of type u32
+Client 60984: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 2
+Client 60984: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 61000: running reserve for a 100x100 matrix of type u32
+Client 61000: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 4
+Client 61000: running poll for the 100x100 matrix of type u32 on index 7
+Client 61000: running reserve for a 1000x1000 matrix of type u32
+Client 60984: running reserve for a 10000x10000 matrix of type u32
+Client 61000: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 4
+Client 60984: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 3
+Client 61000: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 61000: running reserve for a 10000x10000 matrix of type u32
+Client 61000: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 10
+Client 60992: running reserve for a 100x100 matrix of type u32
+Client 60992: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 12
+Client 60992: running poll for the 100x100 matrix of type u32 on index 7
+Client 60992: running reserve for a 1000x1000 matrix of type u32
+Client 60992: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 10
+Client 60992: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 60992: running reserve for a 10000x10000 matrix of type u32
+Client 60992: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 10
+Client 61012: running reserve for a 100x100 matrix of type u32
+Client 61004: running reserve for a 100x100 matrix of type u32
+Client 61012: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 8
+Client 61004: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 7
+Client 61012: running poll for the 100x100 matrix of type u32 on index 7
+Client 61012: running reserve for a 1000x1000 matrix of type u32
+Client 61012: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 5
+Client 61004: running poll for the 100x100 matrix of type u32 on index 7
+Client 61004: running reserve for a 1000x1000 matrix of type u32
+Client 60996: running reserve for a 100x100 matrix of type u32
+Client 61004: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 3
+Client 60996: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 11
+Client 60996: running poll for the 100x100 matrix of type u32 on index 7
+Client 61012: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 60996: running reserve for a 1000x1000 matrix of type u32
+Client 61004: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 60996: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 8
+Client 61012: running reserve for a 10000x10000 matrix of type u32
+Client 61012: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 2
+Client 61004: running reserve for a 10000x10000 matrix of type u32
+Client 60996: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 61004: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 2
+Client 60996: running reserve for a 10000x10000 matrix of type u32
+Client 60996: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 5
+Client 61008: running reserve for a 100x100 matrix of type u32
+Client 61008: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 6
+Client 61008: running poll for the 100x100 matrix of type u32 on index 7
+Client 61008: running reserve for a 1000x1000 matrix of type u32
+Client 61008: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 2
+Client 61008: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 61008: running reserve for a 10000x10000 matrix of type u32
+Client 61008: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 4
+Client 60988: running reserve for a 100x100 matrix of type u32
+Client 60988: running calc for the 100x100 matrix of type u32 on index 7 with threadCount 12
+Client 60988: running poll for the 100x100 matrix of type u32 on index 7
+Client 60988: running reserve for a 1000x1000 matrix of type u32
+Client 60988: running calc for the 1000x1000 matrix of type u32 on index 8 with threadCount 12
+Client 60988: running poll for the 1000x1000 matrix of type u32 on index 8
+Client 60988: running reserve for a 10000x10000 matrix of type u32
+Client 60988: running calc for the 10000x10000 matrix of type u32 on index 9 with threadCount 9
+Client 61000: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 60984: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 60992: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 61012: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 61004: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 60996: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 60988: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 61008: running poll for the 10000x10000 matrix of type u32 on index 9
+Client 61000: running reserve for a 100x100 matrix of type u64
+Client 61000: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 7
+Client 61000: running poll for the 100x100 matrix of type u64 on index 10
+Client 61000: running reserve for a 1000x1000 matrix of type u64
+Client 61000: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 8
+Client 61000: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 61000: running reserve for a 10000x10000 matrix of type u64
+Client 61000: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 4
+Client 60992: running reserve for a 100x100 matrix of type u64
+Client 60992: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 11
+Client 60992: running poll for the 100x100 matrix of type u64 on index 10
+Client 60992: running reserve for a 1000x1000 matrix of type u64
+Client 60992: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 6
+Client 60992: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 60992: running reserve for a 10000x10000 matrix of type u64
+Client 60992: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 4
+Client 60984: running reserve for a 100x100 matrix of type u64
+Client 60984: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 12
+Client 60984: running poll for the 100x100 matrix of type u64 on index 10
+Client 60984: running reserve for a 1000x1000 matrix of type u64
+Client 60984: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 5
+Client 60996: running reserve for a 100x100 matrix of type u64
+Client 60988: running reserve for a 100x100 matrix of type u64
+Client 60988: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 2
+Client 60984: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 60988: running poll for the 100x100 matrix of type u64 on index 10
+Client 60996: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 10
+Client 60988: running reserve for a 1000x1000 matrix of type u64
+Client 60996: running poll for the 100x100 matrix of type u64 on index 10
+Client 60988: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 2
+Client 60996: running reserve for a 1000x1000 matrix of type u64
+Client 60996: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 7
+Client 60988: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 60996: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 61008: running reserve for a 100x100 matrix of type u64
+Client 60984: running reserve for a 10000x10000 matrix of type u64
+Client 61008: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 6
+Client 60984: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 8
+Client 61008: running poll for the 100x100 matrix of type u64 on index 10
+Client 61008: running reserve for a 1000x1000 matrix of type u64
+Client 61008: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 9
+Client 61008: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 60988: running reserve for a 10000x10000 matrix of type u64
+Client 60988: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 6
+Client 60996: running reserve for a 10000x10000 matrix of type u64
+Client 60996: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 3
+Client 61008: running reserve for a 10000x10000 matrix of type u64
+Client 61012: running reserve for a 100x100 matrix of type u64
+Client 61008: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 2
+Client 61012: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 11
+Client 61012: running poll for the 100x100 matrix of type u64 on index 10
+Client 61012: running reserve for a 1000x1000 matrix of type u64
+Client 61012: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 6
+Client 61012: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 61012: running reserve for a 10000x10000 matrix of type u64
+Client 61012: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 6
+Client 61004: running reserve for a 100x100 matrix of type u64
+Client 61004: running calc for the 100x100 matrix of type u64 on index 10 with threadCount 11
+Client 61004: running poll for the 100x100 matrix of type u64 on index 10
+Client 61004: running reserve for a 1000x1000 matrix of type u64
+Client 61004: running calc for the 1000x1000 matrix of type u64 on index 11 with threadCount 10
+Client 61004: running poll for the 1000x1000 matrix of type u64 on index 11
+Client 61004: running reserve for a 10000x10000 matrix of type u64
+Client 61004: running calc for the 10000x10000 matrix of type u64 on index 12 with threadCount 9
+Client 61000: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 60992: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 60996: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 60984: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 61008: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 61012: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 60988: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 61004: running poll for the 10000x10000 matrix of type u64 on index 12
+Client 61000: running reserve for a 100x100 matrix of type i8
+Client 61000: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 2
+Client 61000: running poll for the 100x100 matrix of type i8 on index 13
+Client 61000: running reserve for a 1000x1000 matrix of type i8
+Client 61000: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 12
+Client 61000: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 61000: running reserve for a 10000x10000 matrix of type i8
+Client 61000: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 10
+Client 61012: running reserve for a 100x100 matrix of type i8
+Client 61012: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 7
+Client 61012: running poll for the 100x100 matrix of type i8 on index 13
+Client 61012: running reserve for a 1000x1000 matrix of type i8
+Client 61012: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 7
+Client 61012: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 61012: running reserve for a 10000x10000 matrix of type i8
+Client 61012: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 10
+Client 60988: running reserve for a 100x100 matrix of type i8
+Client 60988: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 11
+Client 60988: running poll for the 100x100 matrix of type i8 on index 13
+Client 60988: running reserve for a 1000x1000 matrix of type i8
+Client 60988: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 11
+Client 60988: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 60988: running reserve for a 10000x10000 matrix of type i8
+Client 60988: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 8
+Client 60984: running reserve for a 100x100 matrix of type i8
+Client 60984: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 2
+Client 60984: running poll for the 100x100 matrix of type i8 on index 13
+Client 60984: running reserve for a 1000x1000 matrix of type i8
+Client 60984: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 6
+Client 60984: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 60996: running reserve for a 100x100 matrix of type i8
+Client 60996: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 7
+Client 60996: running poll for the 100x100 matrix of type i8 on index 13
+Client 60996: running reserve for a 1000x1000 matrix of type i8
+Client 60996: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 9
+Client 60984: running reserve for a 10000x10000 matrix of type i8
+Client 60984: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 7
+Client 60996: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 60996: running reserve for a 10000x10000 matrix of type i8
+Client 60996: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 1
+Client 61000: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 61004: running reserve for a 100x100 matrix of type i8
+Client 61004: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 8
+Client 61004: running poll for the 100x100 matrix of type i8 on index 13
+Client 61004: running reserve for a 1000x1000 matrix of type i8
+Client 61004: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 11
+Client 61004: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 61004: running reserve for a 10000x10000 matrix of type i8
+Client 61004: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 6
+Client 60992: running reserve for a 100x100 matrix of type i8
+Client 60992: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 5
+Client 60992: running poll for the 100x100 matrix of type i8 on index 13
+Client 60992: running reserve for a 1000x1000 matrix of type i8
+Client 60992: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 3
+Client 60992: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 60992: running reserve for a 10000x10000 matrix of type i8
+Client 60992: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 11
+Client 61012: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 60988: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 60996: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 60984: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 61008: running reserve for a 100x100 matrix of type i8
+Client 61008: running calc for the 100x100 matrix of type i8 on index 13 with threadCount 11
+Client 61008: running poll for the 100x100 matrix of type i8 on index 13
+Client 61008: running reserve for a 1000x1000 matrix of type i8
+Client 61008: running calc for the 1000x1000 matrix of type i8 on index 14 with threadCount 2
+Client 61008: running poll for the 1000x1000 matrix of type i8 on index 14
+Client 61008: running reserve for a 10000x10000 matrix of type i8
+Client 61008: running calc for the 10000x10000 matrix of type i8 on index 15 with threadCount 10
+Client 60992: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 61004: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 61008: running poll for the 10000x10000 matrix of type i8 on index 15
+Client 61012: running reserve for a 100x100 matrix of type i16
+Client 61012: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 4
+Client 61012: running poll for the 100x100 matrix of type i16 on index 16
+Client 61012: running reserve for a 1000x1000 matrix of type i16
+Client 61012: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 12
+Client 61012: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 61012: running reserve for a 10000x10000 matrix of type i16
+Client 61012: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 4
+Client 60988: running reserve for a 100x100 matrix of type i16
+Client 60988: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 4
+Client 60988: running poll for the 100x100 matrix of type i16 on index 16
+Client 60988: running reserve for a 1000x1000 matrix of type i16
+Client 60988: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 7
+Client 60988: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 61000: running reserve for a 100x100 matrix of type i16
+Client 61000: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 6
+Client 61000: running poll for the 100x100 matrix of type i16 on index 16
+Client 60988: running reserve for a 10000x10000 matrix of type i16
+Client 61000: running reserve for a 1000x1000 matrix of type i16
+Client 61000: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 2
+Client 60988: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 10
+Client 61000: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 61000: running reserve for a 10000x10000 matrix of type i16
+Client 61000: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 8
+Client 60992: running reserve for a 100x100 matrix of type i16
+Client 60992: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 12
+Client 60992: running poll for the 100x100 matrix of type i16 on index 16
+Client 60992: running reserve for a 1000x1000 matrix of type i16
+Client 60992: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 4
+Client 60992: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 60992: running reserve for a 10000x10000 matrix of type i16
+Client 60992: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 12
+Client 60984: running reserve for a 100x100 matrix of type i16
+Client 60984: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 12
+Client 60984: running poll for the 100x100 matrix of type i16 on index 16
+Client 60984: running reserve for a 1000x1000 matrix of type i16
+Client 60984: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 3
+Client 60984: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 60984: running reserve for a 10000x10000 matrix of type i16
+Client 60984: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 2
+Client 61004: running reserve for a 100x100 matrix of type i16
+Client 61004: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 2
+Client 61004: running poll for the 100x100 matrix of type i16 on index 16
+Client 61004: running reserve for a 1000x1000 matrix of type i16
+Client 61004: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 7
+Client 61004: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 61004: running reserve for a 10000x10000 matrix of type i16
+Client 61004: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 12
+Client 61008: running reserve for a 100x100 matrix of type i16
+Client 61008: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 6
+Client 61008: running poll for the 100x100 matrix of type i16 on index 16
+Client 61008: running reserve for a 1000x1000 matrix of type i16
+Client 61008: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 2
+Client 61008: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 61008: running reserve for a 10000x10000 matrix of type i16
+Client 61008: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 3
+Client 60996: running reserve for a 100x100 matrix of type i16
+Client 60996: running calc for the 100x100 matrix of type i16 on index 16 with threadCount 6
+Client 60996: running poll for the 100x100 matrix of type i16 on index 16
+Client 60996: running reserve for a 1000x1000 matrix of type i16
+Client 60996: running calc for the 1000x1000 matrix of type i16 on index 17 with threadCount 4
+Client 60996: running poll for the 1000x1000 matrix of type i16 on index 17
+Client 60996: running reserve for a 10000x10000 matrix of type i16
+Client 60996: running calc for the 10000x10000 matrix of type i16 on index 18 with threadCount 3
+Client 61012: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 60988: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 61000: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 60992: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 60984: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 61004: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 61008: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 60996: running poll for the 10000x10000 matrix of type i16 on index 18
+Client 60988: running reserve for a 100x100 matrix of type i32
+Client 60988: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 6
+Client 60988: running poll for the 100x100 matrix of type i32 on index 19
+Client 60988: running reserve for a 1000x1000 matrix of type i32
+Client 60988: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 7
+Client 60988: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 60988: running reserve for a 10000x10000 matrix of type i32
+Client 60988: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 1
+Client 61000: running reserve for a 100x100 matrix of type i32
+Client 61000: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 6
+Client 61000: running poll for the 100x100 matrix of type i32 on index 19
+Client 61000: running reserve for a 1000x1000 matrix of type i32
+Client 61000: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 5
+Client 61000: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 61012: running reserve for a 100x100 matrix of type i32
+Client 61012: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 1
+Client 61012: running poll for the 100x100 matrix of type i32 on index 19
+Client 61012: running reserve for a 1000x1000 matrix of type i32
+Client 61000: running reserve for a 10000x10000 matrix of type i32
+Client 61012: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 11
+Client 61000: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 5
+Client 61012: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 61012: running reserve for a 10000x10000 matrix of type i32
+Client 61012: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 12
+Client 61004: running reserve for a 100x100 matrix of type i32
+Client 61004: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 4
+Client 61004: running poll for the 100x100 matrix of type i32 on index 19
+Client 61004: running reserve for a 1000x1000 matrix of type i32
+Client 61004: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 11
+Client 61004: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 61004: running reserve for a 10000x10000 matrix of type i32
+Client 61004: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 1
+Client 60992: running reserve for a 100x100 matrix of type i32
+Client 60992: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 3
+Client 60992: running poll for the 100x100 matrix of type i32 on index 19
+Client 60992: running reserve for a 1000x1000 matrix of type i32
+Client 60992: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 1
+Client 60992: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 60992: running reserve for a 10000x10000 matrix of type i32
+Client 60992: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 4
+Client 61008: running reserve for a 100x100 matrix of type i32
+Client 61008: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 8
+Client 61008: running poll for the 100x100 matrix of type i32 on index 19
+Client 61008: running reserve for a 1000x1000 matrix of type i32
+Client 61008: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 5
+Client 60984: running reserve for a 100x100 matrix of type i32
+Client 60984: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 8
+Client 60984: running poll for the 100x100 matrix of type i32 on index 19
+Client 60984: running reserve for a 1000x1000 matrix of type i32
+Client 60984: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 7
+Client 61008: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 60984: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 60996: running reserve for a 100x100 matrix of type i32
+Client 60996: running calc for the 100x100 matrix of type i32 on index 19 with threadCount 1
+Client 60996: running poll for the 100x100 matrix of type i32 on index 19
+Client 60984: running reserve for a 10000x10000 matrix of type i32
+Client 60996: running reserve for a 1000x1000 matrix of type i32
+Client 60984: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 4
+Client 60996: running calc for the 1000x1000 matrix of type i32 on index 20 with threadCount 3
+Client 61008: running reserve for a 10000x10000 matrix of type i32
+Client 61008: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 5
+Client 60996: running poll for the 1000x1000 matrix of type i32 on index 20
+Client 60996: running reserve for a 10000x10000 matrix of type i32
+Client 60996: running calc for the 10000x10000 matrix of type i32 on index 21 with threadCount 7
+Client 61012: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 61000: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 60988: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 61004: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 60992: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 60984: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 61008: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 60996: running poll for the 10000x10000 matrix of type i32 on index 21
+Client 61012: running reserve for a 100x100 matrix of type i64
+Client 61012: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 5
+Client 61012: running poll for the 100x100 matrix of type i64 on index 22
+Client 61012: running reserve for a 1000x1000 matrix of type i64
+Client 61012: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 10
+Client 61012: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61000: running reserve for a 100x100 matrix of type i64
+Client 61000: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 2
+Client 61012: running reserve for a 10000x10000 matrix of type i64
+Client 61000: running poll for the 100x100 matrix of type i64 on index 22
+Client 61012: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 12
+Client 61000: running reserve for a 1000x1000 matrix of type i64
+Client 60992: running reserve for a 100x100 matrix of type i64
+Client 60992: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 11
+Client 61000: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 12
+Client 60992: running poll for the 100x100 matrix of type i64 on index 22
+Client 60992: running reserve for a 1000x1000 matrix of type i64
+Client 60992: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 3
+Client 60984: running reserve for a 100x100 matrix of type i64
+Client 60984: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 1
+Client 60984: running poll for the 100x100 matrix of type i64 on index 22
+Client 60984: running reserve for a 1000x1000 matrix of type i64
+Client 60984: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 12
+Client 61000: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 60992: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61000: running reserve for a 10000x10000 matrix of type i64
+Client 60984: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61000: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 12
+Client 60992: running reserve for a 10000x10000 matrix of type i64
+Client 60992: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 9
+Client 60984: running reserve for a 10000x10000 matrix of type i64
+Client 60984: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 2
+Client 60996: running reserve for a 100x100 matrix of type i64
+Client 60996: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 6
+Client 60996: running poll for the 100x100 matrix of type i64 on index 22
+Client 60996: running reserve for a 1000x1000 matrix of type i64
+Client 60996: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 3
+Client 61008: running reserve for a 100x100 matrix of type i64
+Client 61008: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 6
+Client 61008: running poll for the 100x100 matrix of type i64 on index 22
+Client 61008: running reserve for a 1000x1000 matrix of type i64
+Client 61008: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 1
+Client 60996: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61008: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 60996: running reserve for a 10000x10000 matrix of type i64
+Client 60996: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 8
+Client 61008: running reserve for a 10000x10000 matrix of type i64
+Client 61008: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 11
+Client 60988: running reserve for a 100x100 matrix of type i64
+Client 60988: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 1
+Client 60988: running poll for the 100x100 matrix of type i64 on index 22
+Client 60988: running reserve for a 1000x1000 matrix of type i64
+Client 60988: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 3
+Client 60988: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61004: running reserve for a 100x100 matrix of type i64
+Client 61004: running calc for the 100x100 matrix of type i64 on index 22 with threadCount 6
+Client 61004: running poll for the 100x100 matrix of type i64 on index 22
+Client 61004: running reserve for a 1000x1000 matrix of type i64
+Client 61004: running calc for the 1000x1000 matrix of type i64 on index 23 with threadCount 11
+Client 60988: running reserve for a 10000x10000 matrix of type i64
+Client 60988: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 5
+Client 61004: running poll for the 1000x1000 matrix of type i64 on index 23
+Client 61004: running reserve for a 10000x10000 matrix of type i64
+Client 61004: running calc for the 10000x10000 matrix of type i64 on index 24 with threadCount 11
+Client 61012: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 60992: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 61000: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 60984: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 60996: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 61008: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 60988: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 61004: running poll for the 10000x10000 matrix of type i64 on index 24
+Client 60992: running reserve for a 100x100 matrix of type f32
+Client 60992: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 2
+Client 60992: running poll for the 100x100 matrix of type f32 on index 25
+Client 60992: running reserve for a 1000x1000 matrix of type f32
+Client 60992: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 6
+Client 60992: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 60992: running reserve for a 10000x10000 matrix of type f32
+Client 60992: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 10
+Client 61008: running reserve for a 100x100 matrix of type f32
+Client 61008: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 5
+Client 61008: running poll for the 100x100 matrix of type f32 on index 25
+Client 61008: running reserve for a 1000x1000 matrix of type f32
+Client 61008: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 10
+Client 61008: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 61008: running reserve for a 10000x10000 matrix of type f32
+Client 61008: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 1
+Client 61012: running reserve for a 100x100 matrix of type f32
+Client 61012: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 7
+Client 61012: running poll for the 100x100 matrix of type f32 on index 25
+Client 61012: running reserve for a 1000x1000 matrix of type f32
+Client 61012: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 6
+Client 61012: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 60988: running reserve for a 100x100 matrix of type f32
+Client 60988: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 5
+Client 60988: running poll for the 100x100 matrix of type f32 on index 25
+Client 61012: running reserve for a 10000x10000 matrix of type f32
+Client 60988: running reserve for a 1000x1000 matrix of type f32
+Client 61012: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 8
+Client 60988: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 3
+Client 60984: running reserve for a 100x100 matrix of type f32
+Client 60984: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 7
+Client 60984: running poll for the 100x100 matrix of type f32 on index 25
+Client 60984: running reserve for a 1000x1000 matrix of type f32
+Client 60984: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 5
+Client 60988: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 60984: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 60988: running reserve for a 10000x10000 matrix of type f32
+Client 60988: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 7
+Client 60984: running reserve for a 10000x10000 matrix of type f32
+Client 60984: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 7
+Client 61000: running reserve for a 100x100 matrix of type f32
+Client 61000: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 9
+Client 61000: running poll for the 100x100 matrix of type f32 on index 25
+Client 61000: running reserve for a 1000x1000 matrix of type f32
+Client 61000: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 11
+Client 61000: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 61000: running reserve for a 10000x10000 matrix of type f32
+Client 61000: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 5
+Client 61004: running reserve for a 100x100 matrix of type f32
+Client 61004: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 8
+Client 61004: running poll for the 100x100 matrix of type f32 on index 25
+Client 61004: running reserve for a 1000x1000 matrix of type f32
+Client 61004: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 5
+Client 61004: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 61004: running reserve for a 10000x10000 matrix of type f32
+Client 61004: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 5
+Client 60996: running reserve for a 100x100 matrix of type f32
+Client 60996: running calc for the 100x100 matrix of type f32 on index 25 with threadCount 11
+Client 60996: running poll for the 100x100 matrix of type f32 on index 25
+Client 60996: running reserve for a 1000x1000 matrix of type f32
+Client 60996: running calc for the 1000x1000 matrix of type f32 on index 26 with threadCount 6
+Client 60996: running poll for the 1000x1000 matrix of type f32 on index 26
+Client 60996: running reserve for a 10000x10000 matrix of type f32
+Client 60996: running calc for the 10000x10000 matrix of type f32 on index 27 with threadCount 1
+Client 60992: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 61008: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 61012: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 60984: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 60988: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 61000: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 61004: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 60996: running poll for the 10000x10000 matrix of type f32 on index 27
+Client 60992: running reserve for a 100x100 matrix of type f64
+Client 60992: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 11
+Client 60992: running poll for the 100x100 matrix of type f64 on index 28
+Client 60992: running reserve for a 1000x1000 matrix of type f64
+Client 60992: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 6
+Client 60992: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 60992: running reserve for a 10000x10000 matrix of type f64
+Client 60992: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 2
+Client 61012: running reserve for a 100x100 matrix of type f64
+Client 61012: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 8
+Client 61012: running poll for the 100x100 matrix of type f64 on index 28
+Client 61012: running reserve for a 1000x1000 matrix of type f64
+Client 61012: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 8
+Client 61012: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61004: running reserve for a 100x100 matrix of type f64
+Client 61004: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 2
+Client 61004: running poll for the 100x100 matrix of type f64 on index 28
+Client 61004: running reserve for a 1000x1000 matrix of type f64
+Client 61004: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 3
+Client 60988: running reserve for a 100x100 matrix of type f64
+Client 60988: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 5
+Client 60988: running poll for the 100x100 matrix of type f64 on index 28
+Client 61004: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61012: running reserve for a 10000x10000 matrix of type f64
+Client 61012: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 11
+Client 60984: running reserve for a 100x100 matrix of type f64
+Client 60984: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 9
+Client 60988: running reserve for a 1000x1000 matrix of type f64
+Client 60984: running poll for the 100x100 matrix of type f64 on index 28
+Client 60984: running reserve for a 1000x1000 matrix of type f64
+Client 60988: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 1
+Client 60984: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 10
+Client 60984: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61004: running reserve for a 10000x10000 matrix of type f64
+Client 60988: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61004: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 11
+Client 61000: running reserve for a 100x100 matrix of type f64
+Client 60988: running reserve for a 10000x10000 matrix of type f64
+Client 61000: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 12
+Client 60988: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 7
+Client 61000: running poll for the 100x100 matrix of type f64 on index 28
+Client 60984: running reserve for a 10000x10000 matrix of type f64
+Client 61000: running reserve for a 1000x1000 matrix of type f64
+Client 60984: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 12
+Client 61000: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 12
+Client 61000: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61000: running reserve for a 10000x10000 matrix of type f64
+Client 61000: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 2
+Client 60996: running reserve for a 100x100 matrix of type f64
+Client 60996: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 3
+Client 60996: running poll for the 100x100 matrix of type f64 on index 28
+Client 60996: running reserve for a 1000x1000 matrix of type f64
+Client 60996: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 9
+Client 61008: running reserve for a 100x100 matrix of type f64
+Client 61008: running calc for the 100x100 matrix of type f64 on index 28 with threadCount 10
+Client 61008: running poll for the 100x100 matrix of type f64 on index 28
+Client 61008: running reserve for a 1000x1000 matrix of type f64
+Client 61008: running calc for the 1000x1000 matrix of type f64 on index 29 with threadCount 8
+Client 60996: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 61008: running poll for the 1000x1000 matrix of type f64 on index 29
+Client 60996: running reserve for a 10000x10000 matrix of type f64
+Client 60996: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 6
+Client 61008: running reserve for a 10000x10000 matrix of type f64
+Client 61008: running calc for the 10000x10000 matrix of type f64 on index 30 with threadCount 7
+Client 60992: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 61012: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 61004: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 60988: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 61000: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 60984: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 60996: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 61008: running poll for the 10000x10000 matrix of type f64 on index 30
+Client 60992: closed
+Client 61012: closed
+Client 61004: closed
+Client 60988: closed
+Client 61008: closed
+Client 60984: closed
+Client 61000: closed
+Client 60996: closed
+Terminating the server
+Verifying correctness of the transpositions
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+100x100 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+1000x1000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+10000x10000 matrix of type u8 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+100x100 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+1000x1000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+10000x10000 matrix of type u16 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+100x100 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+1000x1000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+10000x10000 matrix of type u32 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+100x100 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+1000x1000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+10000x10000 matrix of type u64 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+100x100 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+1000x1000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+10000x10000 matrix of type i8 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+100x100 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+1000x1000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+10000x10000 matrix of type i16 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+100x100 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+1000x1000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+10000x10000 matrix of type i32 verified
+100x100 matrix of type i64 verified
+100x100 matrix of type i64 verified
+100x100 matrix of type i64 verified
+100x100 matrix of type i64 verified
+100x100 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+1000x1000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+10000x10000 matrix of type i64 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+100x100 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+1000x1000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+10000x10000 matrix of type f32 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+100x100 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+1000x1000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+10000x10000 matrix of type f64 verified
+ 

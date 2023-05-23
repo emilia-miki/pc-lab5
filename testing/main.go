@@ -8,6 +8,7 @@ import (
 	crand "crypto/rand"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,7 +30,8 @@ const CLIENT_EXEC = "./client"
 const TEST_MATRICES_FOLDER = "test_matrices"
 const DOWNLOADS_FOLDER_NAME = "downloaded_matrices"
 
-const TEST_RESULTS_CSV_FILE_NAME = "results.csv"
+const SERVER_MESSAGES_CSV_FILE_NAME = "server.csv"
+const CLIENT_MESSAGES_CSV_FILE_NAME = "client.csv"
 
 const MAX_CONNECTIONS_COUNT = 8
 const POLLING_FREQUENCY = 100
@@ -275,6 +277,11 @@ func generateMatrix(matrix Matrix) error {
 	return nil
 }
 
+func redirectToDevNull(pipe io.ReadCloser) {
+	io.ReadAll(pipe)
+	pipe.Close()
+}
+
 func echoWithPrefix(pipe io.ReadCloser, prefix string) {
 	defer pipe.Close()
 	reader := bufio.NewReader(pipe)
@@ -294,6 +301,9 @@ func echoWithPrefix(pipe io.ReadCloser, prefix string) {
 }
 
 func main() {
+	verify := flag.Bool("verify", true, "after testing is complete, verify that the results of matrix transposition by the server are correct")
+	flag.Parse()
+
 	fmt.Println("Generating matrices for testing")
 
 	os.Mkdir(TEST_MATRICES_FOLDER, os.ModeDir|os.ModePerm)
@@ -332,9 +342,9 @@ func main() {
 
 	serverCmd.Start()
 
-	serverStdoutReader := bufio.NewReader(serverStdoutPipe)
-	line, _ := serverStdoutReader.ReadString('\n')
-	// go echoWithPrefix(serverStdoutPipe, "Server")
+	serverStdoutScanner := bufio.NewScanner(serverStdoutPipe)
+	serverStdoutScanner.Scan()
+	line := serverStdoutScanner.Text()
 	go echoWithPrefix(serverStderrPipe, "Server")
 
 	serverPortStr := jsonExtractValue(line, "port")
@@ -355,7 +365,6 @@ func main() {
 			serverCancel()
 			os.Exit(1)
 		}
-		defer daemonStdoutPipe.Close()
 
 		daemonStderrPipe, err := daemonCmd.StderrPipe()
 		if err != nil {
@@ -390,55 +399,86 @@ func main() {
 			}
 		}
 
+		go redirectToDevNull(daemonStdoutPipe)
 		go echoWithPrefix(daemonStderrPipe, fmt.Sprintf("Client %d", clientIds[i]))
 	}
 
-	objectChannel := make(chan string)
-	for i := 0; i < MAX_CONNECTIONS_COUNT; i++ {
-		go handleClient(clientIds[i], daemonIds[i], objectChannel)
-	}
-
-	runningConnections := MAX_CONNECTIONS_COUNT
-	resultsCSV, err := os.Create(TEST_RESULTS_CSV_FILE_NAME)
+	serverMessagesCSV, err := os.Create(SERVER_MESSAGES_CSV_FILE_NAME)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating file %s: %s\n", TEST_RESULTS_CSV_FILE_NAME, err)
+		fmt.Fprintf(os.Stderr, "Error creating file %s: %s\n", SERVER_MESSAGES_CSV_FILE_NAME, err)
 		serverCancel()
 		os.Exit(1)
 	}
+	serverMessagesCSV.WriteString(strings.Join(getColumns(), ",") + "\n")
 
-	resultsCSV.WriteString(strings.Join(getColumns(), ",") + "\n")
+	runningConnections := MAX_CONNECTIONS_COUNT
+	clientMessagesCSV, err := os.Create(CLIENT_MESSAGES_CSV_FILE_NAME)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating file %s: %s\n", CLIENT_MESSAGES_CSV_FILE_NAME, err)
+		serverCancel()
+		os.Exit(1)
+	}
+	clientMessagesCSV.WriteString(strings.Join(getColumns(), ",") + "\n")
+
+	parseAndWrite := func(obj string, csv *os.File) {
+		var parsedObj map[string]string
+		json.Unmarshal([]byte(obj), &parsedObj)
+
+		line := ""
+		len := len(getColumns())
+		for i, column := range getColumns() {
+			value, ok := parsedObj[column]
+			if ok {
+				line += value
+			}
+
+			if i < len-1 {
+				line += ","
+			} else {
+				line += "\n"
+			}
+		}
+
+		csv.WriteString(line)
+	}
+
+	go func() {
+		for {
+			available := serverStdoutScanner.Scan()
+			if !available {
+				serverStdoutPipe.Close()
+				break
+			}
+
+			line := serverStdoutScanner.Text()
+			parseAndWrite(line, serverMessagesCSV)
+		}
+	}()
+
+	clientObjectChannel := make(chan string)
+	for i := 0; i < MAX_CONNECTIONS_COUNT; i++ {
+		go handleClient(clientIds[i], daemonIds[i], clientObjectChannel)
+	}
+
 	for runningConnections > 0 {
-		obj := <-objectChannel
+		obj := <-clientObjectChannel
 
 		if obj == "" {
 			runningConnections -= 1
 		} else {
-			var parsedObj map[string]string
-			json.Unmarshal([]byte(obj), &parsedObj)
-
-			line := ""
-			len := len(getColumns())
-			for i, column := range getColumns() {
-				value, ok := parsedObj[column]
-				if ok {
-					line += value
-				}
-
-				if i < len-1 {
-					line += ","
-				} else {
-					line += "\n"
-				}
-			}
-
-			resultsCSV.WriteString(line)
+			parseAndWrite(obj, clientMessagesCSV)
 		}
 	}
-	close(objectChannel)
+	clientMessagesCSV.Close()
+	close(clientObjectChannel)
 
 	fmt.Println("Terminating the server")
 	serverCancel()
 	serverCmd.Wait()
+
+	if !*verify {
+		return
+	}
 
 	fmt.Println("Verifying correctness of the transpositions")
 	matrixList = getMatrixList()
@@ -484,10 +524,14 @@ func main() {
 			return fmt.Sprintf("[%s]", strings.Join(strs, " "))
 		}
 
-		origBytes := readBytesFrom(getTestFilePath(matrix))
+		origFilePath := getTestFilePath(matrix)
+		origBytes := readBytesFrom(origFilePath)
+		os.Remove(origFilePath)
 	Outer:
 		for _, id := range clientIds {
+			downloadedFilePath := getDownloadedFilePath(id, matrix)
 			transposedBytes := readBytesFrom(getDownloadedFilePath(id, matrix))
+			os.Remove(downloadedFilePath)
 
 			fmt.Printf("%12s verifying ", matrix)
 
@@ -498,6 +542,7 @@ func main() {
 				}
 				fmt.Printf("\r%12s verifying ", matrix)
 			}
+
 			for i := uint32(0); i < matrix.Dimension; i++ {
 				for j := uint32(0); j <= i; j++ {
 					origSlice := getSlice(origBytes, i, j)
@@ -508,7 +553,7 @@ func main() {
 						continue Outer
 					}
 
-					if displayProgressBar && (100*uint64(i)*uint64(matrix.Dimension)+uint64(j))%(bytesLen) == 0 {
+					if displayProgressBar && 100*(uint64(i)*uint64(matrix.Dimension)+uint64(j))%(bytesLen) == 0 {
 						fmt.Print("x")
 					}
 				}
