@@ -9,7 +9,7 @@ for the client, and sent the results back to the client if the client sent a
 because that is the next lab's task --- to rewrite the task processing part of
 this server using futures/promises.
 
-[Application architecture](arch.png)
+![Application architecture](arch.png)
 
 The [client](client) is both a TCP server and a TCP client depending on the flags
 passed to it. This is useful to allow for usage like this:
@@ -30,16 +30,16 @@ $
 
 The [server](server) is written according to the provided architecture. Main
 highlights:
-- [server/src/main.rs](main.rs) file handles incoming connections on a single
+- [main.rs](server/src/main.rs) file handles incoming connections on a single
 thread, spawning a new thread for each connection.
-- [server/src/threads.rs](thread.rs) handles a client connection.
-- [server/src/job.rs](job.rs) handles client tasks.
-- [server/src/request.rs](request.rs) contains these two notable functions:
+- [threads.rs](server/src/thread.rs) handles a client connection.
+- [job.rs](server/src/job.rs) handles client tasks.
+- [request.rs](server/src/request.rs) contains these two notable functions:
   - from_stream --- reads the TCP stream and parses the request
   according to the application protocol;
   - execute --- calls the JobManager in the appropriate way for the request
   and returns back the response.
-- [server/src/response.rs](response.rs) has a send function that encodes
+- [response.rs](server/src/response.rs) has a send function that encodes
 the request according to the application protocol and writes it to the TCP
 stream.
 
