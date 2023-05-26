@@ -8,10 +8,10 @@ A parallel computing lab. The task is to create a client-server application
 that works over the TCP protocol. The application protocol should be custom.
 The server should accept matrices from clients on different threads, transpose
 the matrices using multiple threads without blocking further request processing
-for the client, and sent the results back to the client if the client sent a 
-"get status" request and the matrix is available. The server shouldn't use async,
-because that is the next lab's task --- to rewrite the task processing part of
-this server using futures/promises.
+for the client, and send the results back to the client if the client sent a 
+"get status" request and the matrix is available. The server how uses mostly 
+async functions with the Tokio runtime, and a rayon thread pool for CPU-bound tasks,
+which is integrated into the rest of the application using tokio channels.
 
 ![Application architecture](arch.png)
 
