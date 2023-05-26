@@ -146,7 +146,7 @@ unsafe impl Sync for PointerWrapper {}
 //     rx.await.unwrap()
 // }
 
-// actually translates to:
+// actually translates to something like this:
 enum TransposeState<'a> {
     Initialized {
         tp: &'a rayon::ThreadPool,
