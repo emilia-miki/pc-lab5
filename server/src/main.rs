@@ -5,9 +5,11 @@ mod response;
 mod status;
 mod thread;
 
-use std::{error::Error, net::TcpListener};
+use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
+use tokio::net::TcpListener;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), String> {
     const ADDR: &str = "127.0.0.1";
 
     let args: Vec<String> = std::env::args().collect();
@@ -17,22 +19,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => Err("there can be only one argument: the port number")?,
     };
 
-    let listener = TcpListener::bind(format!("{ADDR}:{port}"))?;
+    let listener = TcpListener::bind(format!("{ADDR}:{port}"))
+        .await
+        .map_err(|e| e.to_string())?;
     let port = listener.local_addr().unwrap().port();
     println!(r#"{{"kind":"listen","port":"{port}"}}"#);
 
-    for stream in listener.incoming() {
-        let stream = stream?;
-        let port = stream.peer_addr().unwrap().port();
+    let cpu_count = System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::new()))
+        .cpus()
+        .len();
 
-        match std::thread::Builder::new()
-            .name(format!("{port}"))
-            .spawn(move || thread::handle_client(stream))
-        {
-            Ok(_) => (),
-            Err(error) => eprintln!("{}", error),
-        };
+    let tp = rayon::ThreadPoolBuilder::new()
+        .num_threads(cpu_count)
+        .build()
+        .unwrap();
+
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+    tokio::task::spawn(job::process_tasks(tp, rx));
+    loop {
+        let (stream, _) = listener.accept().await.map_err(|e| e.to_string())?;
+        tokio::spawn(thread::handle_client(stream, tx.clone()));
     }
-
-    Ok(())
 }

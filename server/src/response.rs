@@ -1,13 +1,14 @@
 use std::error::Error;
 use std::format;
-use std::io::Write;
-use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::io::AsyncWriteExt;
+use tokio::net::TcpStream;
 
 use crate::status::Status;
 
+#[derive(Debug)]
 pub enum Response {
-    Reserve { index: u8 },
+    Reserve { id: usize },
     Calc,
     Poll { status: Status },
     Error { error: String },
@@ -36,25 +37,25 @@ impl std::convert::From<&Response> for String {
 }
 
 impl Response {
-    pub fn send(self, stream: &mut TcpStream) -> Result<(), Box<dyn Error>> {
+    pub async fn send(self, stream: &mut TcpStream) -> Result<(), Box<dyn Error>> {
         let response_code = u8::from(&self);
-        stream.write_all(&[response_code])?;
+        stream.write_all(&[response_code]).await?;
 
         match self {
-            Response::Reserve { index } => stream.write_all(&[index])?,
+            Response::Reserve { id } => stream.write_all(&id.to_le_bytes()).await?,
             Response::Calc => (),
             Response::Poll { status } => {
                 let status_code = u8::from(&status);
-                stream.write_all(&[status_code])?;
+                stream.write_all(&[status_code]).await?;
 
                 if let Status::Completed { matrix_bytes } = status {
-                    stream.write_all(&matrix_bytes)?;
+                    stream.write_all(&matrix_bytes).await?;
                 }
             }
             Response::Error { error } => {
                 let error = error.as_bytes();
-                stream.write_all(&[error.len() as u8])?;
-                stream.write_all(error)?;
+                stream.write_all(&[error.len() as u8]).await?;
+                stream.write_all(error).await?;
             }
         };
 
@@ -73,9 +74,7 @@ impl Response {
             {
                 let mut json = format!(r#""type":"{}""#, String::from(self));
                 match self {
-                    Response::Reserve { index } => {
-                        json = format!(r#"{},"index":"{}""#, json, index)
-                    }
+                    Response::Reserve { id } => json = format!(r#"{},"id":"{}""#, json, id),
                     Response::Calc => (),
                     Response::Poll { status } => {
                         json = format!(r#"{},"status":"{}""#, json, String::from(status));

@@ -1,4 +1,6 @@
-#[derive(Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Clone, Copy, Serialize)]
 pub enum MatrixType {
     U8,
     U16,

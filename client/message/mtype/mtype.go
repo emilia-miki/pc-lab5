@@ -26,14 +26,8 @@ func (mType MessageType) String() string {
 	return "undefined"
 }
 
-func (mType MessageType) Encode() (code uint8, err error) {
-	if mType == Error {
-		err = fmt.Errorf("Invalid request type: %s", mType)
-		return
-	}
-
-	code = uint8(mType)
-	return
+func (mType MessageType) Encode() uint8 {
+	return uint8(mType)
 }
 
 func Decode(code uint8) (mType MessageType, err error) {

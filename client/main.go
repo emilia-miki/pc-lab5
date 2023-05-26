@@ -78,13 +78,12 @@ func runDaemonMainLoop(server string) error {
 			break
 		case command.Calc:
 			request = message.NewRequest(clientId, messageType.Calc, map[string]string{
-				"index":       args[1],
-				"threadCount": args[2],
+				"id": args[1],
 			})
 			break
 		case command.Poll:
 			request = message.NewRequest(clientId, messageType.Poll, map[string]string{
-				"index": args[1],
+				"id": args[1],
 			})
 			break
 		case command.Close: // terminates the daemon
@@ -120,11 +119,7 @@ func main() {
 	mFileName := flag.String("file", "", "the file to read the matrix from")
 
 	// startCalculation, getStatus command arguments
-	index := flag.Uint("index", 0, "the index of a registered job")
-
-	// getStatus command arguments
-	threadCount := flag.Uint("threadCount", 0,
-		"the number of threads for the server to process your matrix with")
+	jobId := flag.Uint("job-id", 0, "the id of a registered job")
 
 	flag.Parse()
 
@@ -192,16 +187,9 @@ func main() {
 		}
 
 		break
-	case command.Calc:
-		if *threadCount == 0 {
-			fmt.Fprintf(os.Stderr, "Invalid threadCount argument: must be a strictly positive integer.\n")
-			os.Exit(1)
-		}
-
-		fallthrough
-	case command.Poll:
-		if *index == 0 {
-			fmt.Fprintf(os.Stderr, "Invalid index argument: must be a strictly positive integer.\n")
+	case command.Calc, command.Poll:
+		if *jobId == 0 {
+			fmt.Fprintf(os.Stderr, "Invalid id argument: must be a strictly positive integer.\n")
 			os.Exit(1)
 		}
 		break
@@ -221,10 +209,10 @@ func main() {
 		_, err = fmt.Fprintln(connection, *commandStr, *mTypeStr, *mDimension, *mFileName)
 		break
 	case command.Calc:
-		_, err = fmt.Fprintln(connection, *commandStr, *index, *threadCount)
+		_, err = fmt.Fprintln(connection, *commandStr, *jobId)
 		break
 	case command.Poll:
-		_, err = fmt.Fprintln(connection, *commandStr, *index)
+		_, err = fmt.Fprintln(connection, *commandStr, *jobId)
 		break
 	case command.Close:
 		_, err = fmt.Fprintln(connection, *commandStr)

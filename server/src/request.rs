@@ -1,22 +1,23 @@
+use serde::Serialize;
 use std::error::Error;
-use std::io::Read;
-use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::io::AsyncReadExt;
+use tokio::net::TcpStream;
 
 use crate::job::JobManager;
 use crate::{matrix_type::MatrixType, response::Response};
 
+#[derive(Serialize)]
 pub enum Request {
     Reserve {
         matrix_type: MatrixType,
         matrix_dimension: u32,
     },
     Calc {
-        index: u8,
-        thread_count: u8,
+        id: usize,
     },
     Poll {
-        index: u8,
+        id: usize,
     },
 }
 
@@ -31,20 +32,25 @@ impl std::convert::From<&Request> for String {
 }
 
 impl Request {
-    pub fn from_stream(stream: &mut TcpStream) -> Result<Request, Box<dyn Error>> {
-        let mut buffer = [0u8; 5];
+    pub async fn from_stream(stream: &mut TcpStream) -> Result<Request, Box<dyn Error>> {
+        let request_code = {
+            let mut buffer = [0u8; 1];
+            stream.read_exact(&mut buffer).await?;
+            buffer[0]
+        };
 
-        stream.read_exact(&mut buffer[..1])?;
-        let request_code = buffer[0];
         match request_code {
             0 => {
-                stream.read_exact(&mut buffer[..5])?;
+                let matrix_type = {
+                    let mut buffer = [0u8; 1];
+                    stream.read_exact(&mut buffer).await?;
+                    MatrixType::try_from(buffer[0])?
+                };
 
-                let matrix_type = MatrixType::try_from(buffer[0])?;
                 let matrix_dimension = {
-                    let mut array = [0u8; 4];
-                    array.copy_from_slice(&buffer[1..5]);
-                    u32::from_le_bytes(array)
+                    let mut buffer = [0u8; 4];
+                    stream.read_exact(&mut buffer).await?;
+                    u32::from_le_bytes(buffer)
                 };
 
                 Ok(Request::Reserve {
@@ -53,54 +59,50 @@ impl Request {
                 })
             }
             1 => {
-                stream.read_exact(&mut buffer[..2])?;
-                let index = buffer[0];
-                let thread_count = buffer[1];
+                let id = {
+                    let mut buffer = [0u8; 8];
+                    stream.read_exact(&mut buffer).await?;
+                    usize::from_le_bytes(buffer)
+                };
 
-                Ok(Request::Calc {
-                    index,
-                    thread_count,
-                })
+                Ok(Request::Calc { id })
             }
             2 => {
-                stream.read_exact(&mut buffer[..1])?;
-                let index = buffer[0];
+                let id = {
+                    let mut buffer = [0u8; 8];
+                    stream.read_exact(&mut buffer).await?;
+                    usize::from_le_bytes(buffer)
+                };
 
-                Ok(Request::Poll { index })
+                Ok(Request::Poll { id })
             }
-            code => Err(format!("Unknown request code: {code}"))?,
+            code => Err(format!("unknown request code: {code}"))?,
         }
     }
 
-    pub fn execute(self, job_manager: &mut JobManager, stream: &mut TcpStream) -> Response {
+    pub async fn execute(self, job_manager: &mut JobManager, stream: &mut TcpStream) -> Response {
         match self {
             Request::Reserve {
                 matrix_type,
                 matrix_dimension,
-            } => Response::Reserve {
-                index: job_manager
-                    .reserve(matrix_type, matrix_dimension)
-                    .unwrap_or(0),
+            } => match job_manager.reserve(matrix_type, matrix_dimension).await {
+                Ok(id) => Response::Reserve { id },
+                Err(error) => Response::Error { error },
             },
-            Request::Calc {
-                index,
-                thread_count,
-            } => match job_manager.calc(index, thread_count, stream) {
+            Request::Calc { id } => match job_manager.calc(id, stream).await {
                 Ok(()) => Response::Calc,
-                Err(error) => Response::Error {
-                    error: error.to_string(),
-                },
+                Err(error) => Response::Error { error },
             },
-            Request::Poll { index } => Response::Poll {
-                status: job_manager.poll(index),
+            Request::Poll { id } => Response::Poll {
+                status: job_manager.poll(id).await,
             },
         }
     }
 
-    pub fn to_json_string(&self) -> String {
+    pub fn to_json_string(&self, client_id: u16) -> String {
         format!(
             r#"{{"client":"{}","time":"{}","kind":"{}",{}}}"#,
-            std::thread::current().name().unwrap(),
+            client_id,
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -120,16 +122,8 @@ impl Request {
                             matrix_dimension
                         )
                     }
-                    Request::Calc {
-                        index,
-                        thread_count,
-                    } => {
-                        json = format!(
-                            r#"{},"index":"{}","threadCount":"{}""#,
-                            json, index, thread_count,
-                        )
-                    }
-                    Request::Poll { index } => json = format!(r#"{},"index":"{}""#, json, index),
+                    Request::Calc { id } => json = format!(r#"{},"id":"{}""#, json, id),
+                    Request::Poll { id } => json = format!(r#"{},"id":"{}""#, json, id),
                 }
                 json
             }

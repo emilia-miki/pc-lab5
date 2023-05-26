@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,10 +35,8 @@ const CLIENT_MESSAGES_CSV_FILE_NAME = "client.csv"
 const MAX_CONNECTIONS_COUNT = 8
 const POLLING_FREQUENCY = 100
 
-const MAX_THREAD_COUNT = 12
-
 func getColumns() []string {
-	return []string{"client", "time", "kind", "type", "matrixType", "matrixDimension", "index", "threadCount", "status"}
+	return []string{"client", "time", "kind", "type", "matrixType", "matrixDimension", "id", "status", "message"}
 }
 
 type Matrix struct {
@@ -73,7 +70,7 @@ func getMatrixTypes() []string {
 }
 
 func getMatrixDimensions() []uint32 {
-	return []uint32{100, 1000, 10000}
+	return []uint32{10, 100, 1000, 10000}
 }
 
 func getMatrixList() *list.List {
@@ -116,7 +113,7 @@ func jsonExtractValue(json string, key string) (value string) {
 	return
 }
 
-func runCommand(commandString string, objects chan string) (index uint8, completed bool, err error) {
+func runCommand(commandString string, objects chan string) (id uint64, completed bool, err error) {
 	tokens := strings.Split(commandString, " ")
 	cmd := exec.Command(CLIENT_EXEC, tokens...)
 	cmd.Dir = CLIENT_FOLDER
@@ -141,10 +138,9 @@ func runCommand(commandString string, objects chan string) (index uint8, complet
 		fmt.Fprintf(os.Stderr, "command %s invalid output: %s %s", commandString, l, r)
 	}
 
-	str := jsonExtractValue(r, "index")
+	str := jsonExtractValue(r, "id")
 	if str != "" {
-		res, _ := strconv.ParseUint(str, 10, 8)
-		index = uint8(res)
+		id, _ = strconv.ParseUint(str, 10, 64)
 	}
 
 	completed = jsonExtractValue(r, "status") == "completed"
@@ -152,7 +148,7 @@ func runCommand(commandString string, objects chan string) (index uint8, complet
 	objects <- l
 	objects <- r
 
-	return index, completed, nil
+	return id, completed, nil
 }
 
 func handleClient(clientId uint16, daemonId uint16, objects chan string) {
@@ -168,37 +164,36 @@ func handleClient(clientId uint16, daemonId uint16, objects chan string) {
 		mDimension := matrix.Dimension
 
 		fmt.Printf("Client %d: running reserve for a %s\n", clientId, matrix)
-		index, _, err := runCommand(fmt.Sprintf("--id=%d --command=reserve --type=%s --dimension=%d --file=%s",
+		id, _, err := runCommand(fmt.Sprintf("--id=%d --command=reserve --type=%s --dimension=%d --file=%s",
 			daemonId, mType, mDimension, getTestFilePath(matrix)), objects)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Client %d: Error running reserve for a %s: %s", clientId, matrix, err)
 			os.Exit(1)
 		}
 
-		if index == 0 {
+		if id == 0 {
 			fmt.Printf("Client %d: The server's memory is full. Moving the %s to the end of the queue", clientId, matrix)
 			queue.PushBack(matrix)
 			continue
 		}
 
-		threadCount := 1 + rand.Int()%MAX_THREAD_COUNT
-		fmt.Printf("Client %d: running calc for the %s on index %d with threadCount %d\n",
-			clientId, matrix, index, threadCount)
-		_, _, err = runCommand(fmt.Sprintf("--id=%d --command=calc --index=%d --threadCount=%d",
-			daemonId, index, threadCount), objects)
+		fmt.Printf("Client %d: running calc for the %s (job id %d)\n",
+			clientId, matrix, id)
+		_, _, err = runCommand(fmt.Sprintf("--id=%d --command=calc --job-id=%d",
+			daemonId, id), objects)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Client %d: Error running calc for the %s on index %d with threadCount %d: %s",
-				clientId, matrix, index, threadCount, err)
+			fmt.Fprintf(os.Stderr, "Client %d: Error running calc for the %s (job id %d): %s",
+				clientId, matrix, id, err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Client %d: running poll for the %s on index %d\n", clientId, matrix, index)
+		fmt.Printf("Client %d: running poll for the %s (job id %d)\n", clientId, matrix, id)
 		pollingFrequency := time.Millisecond * POLLING_FREQUENCY
 		for {
-			_, completed, err := runCommand(fmt.Sprintf("--id=%d --command=poll --index=%d", daemonId, index), objects)
+			_, completed, err := runCommand(fmt.Sprintf("--id=%d --command=poll --job-id=%d", daemonId, id), objects)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Client %d: Error running poll for the %s on index %d: %s",
-					clientId, matrix, index, err)
+				fmt.Fprintf(os.Stderr, "Client %d: Error running poll for the %s (job id %d): %s",
+					clientId, matrix, id, err)
 				os.Exit(1)
 			}
 
@@ -526,12 +521,9 @@ func main() {
 
 		origFilePath := getTestFilePath(matrix)
 		origBytes := readBytesFrom(origFilePath)
-		os.Remove(origFilePath)
 	Outer:
 		for _, id := range clientIds {
-			downloadedFilePath := getDownloadedFilePath(id, matrix)
 			transposedBytes := readBytesFrom(getDownloadedFilePath(id, matrix))
-			os.Remove(downloadedFilePath)
 
 			fmt.Printf("%12s verifying ", matrix)
 

@@ -33,20 +33,22 @@ func NewRequest(client uint16, mType messageType.MessageType, payload map[string
 	}
 }
 
-var matrices map[uint8]matrix.Matrix = make(map[uint8]matrix.Matrix)
+var matrices map[uint64]matrix.Matrix = make(map[uint64]matrix.Matrix)
 
 func (request *Request) Execute(con net.Conn) (resp Response, err error) {
-	buffer := [5]uint8{}
-	buffer[0], err = request.Type.Encode()
+	buffer := [1]uint8{request.Type.Encode()}
+	_, err = con.Write(buffer[:])
 	if err != nil {
+		err = fmt.Errorf("error writing request type code to TCP stream: %s", err)
 		return
 	}
-	con.Write(buffer[:1])
 
 	var parsed uint64
+	var id uint64
+	var mType matrixType.MatrixType
+	var mDimension uint32
 	switch request.Type {
 	case messageType.Reserve:
-		var mType matrixType.MatrixType
 		mType, err = matrixType.FromString(request.Payload["matrixType"])
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: %s", request.Type, request.Payload["matrixType"])
@@ -58,45 +60,39 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 			err = fmt.Errorf("error processing a %s request: error parsing matrixDimension: %s", request.Type, err)
 			return
 		}
-		mDimension := uint32(parsed)
+		mDimension = uint32(parsed)
 
+		buffer := [5]uint8{}
 		buffer[0] = mType.Encode()
 		*(*uint32)(unsafe.Pointer(&buffer[1])) = mDimension
-		_, err = con.Write(buffer[:5])
+		_, err = con.Write(buffer[:])
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
 			return
 		}
 		break
 	case messageType.Calc:
-		parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
+		id, err = strconv.ParseUint(request.Payload["id"], 10, 64)
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error parsing index: %s", request.Type, err)
 			return
 		}
-		index := uint8(parsed)
 
-		parsed, err = strconv.ParseUint(request.Payload["threadCount"], 10, 8)
-		if err != nil {
-			err = fmt.Errorf("error processing a %s request: error parsing threadCount: %s", request.Type, err)
+		matrix, ok := matrices[id]
+		if !ok {
+			err = fmt.Errorf("error processing a %s request: You have to reserve "+
+				"a matrix on id %d before requesting calculation on it", request.Type, id)
 			return
 		}
-		threadCount := uint8(parsed)
 
-		buffer[0] = index
-		buffer[1] = threadCount
-		_, err = con.Write(buffer[:2])
+		buffer := [8]uint8{}
+		*(*uint64)(unsafe.Pointer(&buffer[0])) = id
+		_, err = con.Write(buffer[:])
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
 			return
 		}
 
-		matrix, ok := matrices[index]
-		if !ok {
-			err = fmt.Errorf("error processing a %s request: You have to reserve "+
-				"a matrix before requesting calculation", request.Type)
-			return
-		}
 		err = matrix.FromFileToTCPStream(con)
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
@@ -104,15 +100,15 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 		}
 		break
 	case messageType.Poll:
-		parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
+		id, err = strconv.ParseUint(request.Payload["id"], 10, 64)
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error parsing index: %s", request.Type, err)
 			return
 		}
-		index := uint8(parsed)
 
-		buffer[0] = index
-		_, err = con.Write(buffer[:1])
+		buffer := [8]uint8{}
+		*(*uint64)(unsafe.Pointer(&buffer[0])) = id
+		_, err = con.Write(buffer[:])
 		if err != nil {
 			err = fmt.Errorf("error processing a %s request: error writing to TCP stream: %s", request.Type, err)
 			return
@@ -124,9 +120,7 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 	}
 	request.Time = time.Now()
 
-	responsePayload := map[string]string{}
-
-	_, err = con.Read(buffer[:1])
+	_, err = con.Read(buffer[:])
 	if err != nil {
 		err = fmt.Errorf("error reading response type code from TCP stream: %s", err)
 		return
@@ -137,40 +131,28 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 	if err != nil {
 		return
 	}
-
+	responsePayload := map[string]string{}
 	switch responseType {
 	case messageType.Reserve:
-		_, err = con.Read(buffer[:1])
+		buffer := [8]uint8{}
+		_, err = con.Read(buffer[:])
 		if err != nil {
-			err = fmt.Errorf("error processing a %s response: error writing to TCP stream: %s", responseType, err)
+			err = fmt.Errorf("error processing a %s response: error reading from TCP stream: %s", responseType, err)
 			return
 		}
+		id = *(*uint64)(unsafe.Pointer(&buffer[0]))
+		responsePayload["id"] = strconv.FormatUint(id, 10)
 
-		index := buffer[0]
-		responsePayload["index"] = strconv.FormatUint(uint64(index), 10)
-
-		var mType matrixType.MatrixType
-		mType, err = matrixType.FromString(request.Payload["matrixType"])
-		if err != nil {
-			err = fmt.Errorf("error processing a %s response: error parsing matrixType: %s", responseType, err)
-			return
-		}
-
-		parsed, err = strconv.ParseUint(request.Payload["matrixDimension"], 10, 32)
-		if err != nil {
-			err = fmt.Errorf("error processing a %s response: error parsing matrixDimension: %s", responseType, err)
-			return
-		}
-		mDimension := uint32(parsed)
-
-		matrices[index] = matrix.Matrix{
+		filePath := request.Payload["file"]
+		delete(request.Payload, "file")
+		matrices[id] = matrix.Matrix{
 			Type:      mType,
 			Dimension: mDimension,
-			FilePath:  fmt.Sprintf(request.Payload["file"]),
+			FilePath:  filePath,
 		}
 		break
 	case messageType.Poll:
-		_, err = con.Read(buffer[:1])
+		_, err = con.Read(buffer[:])
 		if err != nil {
 			err = fmt.Errorf("error processing a %s response: error reading status type code from TCP stream: %s", responseType, err)
 			return
@@ -184,13 +166,7 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 		responsePayload["status"] = st.String()
 
 		if st == status.Completed {
-			parsed, err = strconv.ParseUint(request.Payload["index"], 10, 8)
-			if err != nil {
-				err = fmt.Errorf("error processing a %s response: error parsing index: %s", responseType, err)
-				return
-			}
-			index := uint8(parsed)
-			matrix := matrices[index]
+			matrix := matrices[id]
 
 			err = matrix.FromTCPStreamToFile(con)
 			if err != nil {
@@ -200,17 +176,16 @@ func (request *Request) Execute(con net.Conn) (resp Response, err error) {
 
 			responsePayload["matrixType"] = matrix.Type.String()
 			responsePayload["matrixDimension"] = strconv.FormatUint(uint64(matrix.Dimension), 10)
-			responsePayload["file"] = matrix.FilePath
 		}
 		break
 	case messageType.Error:
-		_, err = con.Read(buffer[:1])
+		_, err = con.Read(buffer[:])
 		if err != nil {
 			err = fmt.Errorf("error processing an %s response: error reading message length from TCP stream: %s", responseType, err)
 			return
 		}
-
 		len := buffer[0]
+
 		buffer := make([]uint8, len)
 		_, err = con.Read(buffer)
 		if err != nil {
