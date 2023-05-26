@@ -1,4 +1,8 @@
-# pc-lab4
+# pc-lab5
+
+This is basically a fork of https://github.com/emilia-miki/pc-lab4. The only
+significant changes are to the server, which is now mostly asynchronous, and
+some application protocol changes described below.
 
 A parallel computing lab. The task is to create a client-server application
 that works over the TCP protocol. The application protocol should be custom.
@@ -14,14 +18,15 @@ this server using futures/promises.
 The [client](client) is both a TCP server and a TCP client depending on the flags
 passed to it. This is useful to allow for usage like this:
 ```
-$ ./client --daemon --port=7878 &
+$ ./client --daemon
+{ json data, including the daemon port, which is used as id below }
 $ ./client --id=7878 --command=reserve --type=u8 --dimension=100
 { json request }
 { json response with an assigned task index }
-$ ./client --id=7878 --command=calc --index=1 --threadCount=4
+$ ./client --id=7878 --command=calc --job-id=1
 { json request }
 { json response }
-$ ./client --id=7878 --command=poll --index=1
+$ ./client --id=7878 --command=poll --job-id=1
 { json request }
 { json response }
 $ ./client --id=7878 --command=close
@@ -42,6 +47,10 @@ thread, spawning a new thread for each connection.
 - [response.rs](server/src/response.rs) has a send function that encodes
 the request according to the application protocol and writes it to the TCP
 stream.
+- Everything is asynchronous and running on the Tokio runtime, except the
+thread pool for matrix transposition, which is managed by rayon and integrated
+into the rest of the application with a wrapper function process_tasks and
+a few tokio channels.
 
 The application protocol is as follows:
 - The client must initiate communication with a request and wait to receive
@@ -72,19 +81,18 @@ previous one (undefined behavior).
   (one is enough, because the server does matrix transposition and all the matrices
   have to be square matrices)
 - reserve response:
-  - the first byte is a task index, which can be used to send the other 
-  requests for this task. If the index is 0, the server wasn't able to reserve memory
-  for the matrix. and the index is not valid.
+  - the first 8 bytes are the task ID, which can be used to send the other 
+  requests for this task. If the memory wasn'e reserved, the server will send
+  and error response instead
 - calc request:
-  - the first byte is the task index
-  - the second byte is the number of threads to create for the calculation
+  - the first 8 bytes are the task ID
   - the following bytes are the matrix data itself, row by row
 - calc response:
   - there is no further payload except the message code.
   - if the provided index is not assigned to any tasks, the server returns an error
   response instead.
 - poll request:
-  - the first byte is the task index
+  - the first 8 bytes are the task ID.
 - poll response
   - the first byte is the status code:
     - 0 - no data
